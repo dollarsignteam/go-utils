@@ -65,3 +65,37 @@ func TestMaxOf(t *testing.T) {
 		assert.Equal(t, tc.expected, min)
 	}
 }
+
+func TestRandomInt64(t *testing.T) {
+	testCases := []struct {
+		min         int64
+		max         int64
+		expectedMin int64
+		expectedMax int64
+	}{
+		{min: 5, max: 10, expectedMin: 5, expectedMax: 10},
+		{min: 5, max: -10, expectedMin: -10, expectedMax: 5},
+	}
+	for _, tc := range testCases {
+		result := utils.RandomInt64(tc.min, tc.max)
+		assert.GreaterOrEqual(t, result, tc.expectedMin)
+		assert.LessOrEqual(t, result, tc.expectedMax)
+	}
+}
+
+func TestRandomFloat64(t *testing.T) {
+	testCases := []struct {
+		min         float64
+		max         float64
+		expectedMin float64
+		expectedMax float64
+	}{
+		{min: 5, max: 10, expectedMin: 5, expectedMax: 10},
+		{min: 5, max: -10, expectedMin: -10, expectedMax: 5},
+	}
+	for _, tc := range testCases {
+		result := utils.RandomFloat64(tc.min, tc.max)
+		assert.GreaterOrEqual(t, result, tc.expectedMin)
+		assert.LessOrEqual(t, result, tc.expectedMax)
+	}
+}
