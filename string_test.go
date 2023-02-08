@@ -22,6 +22,11 @@ func TestRemoveAllSpaces(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
+func TestUUID(t *testing.T) {
+	result := utils.String.UUID()
+	assert.Len(t, result, 36)
+}
+
 func BenchmarkRemoveDuplicateSpaces(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.String.RemoveDuplicateSpaces(TestSpacesString)

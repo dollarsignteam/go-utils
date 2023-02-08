@@ -2,6 +2,8 @@ package utils
 
 import (
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -35,4 +37,8 @@ func (StringUtil) RemoveDuplicateSpaces(s string) string {
 
 func (StringUtil) RemoveAllSpaces(s string) string {
 	return strings.Join(strings.Fields(zeroWithReplacer.Replace(s)), "")
+}
+
+func (StringUtil) UUID() string {
+	return uuid.NewString()
 }
