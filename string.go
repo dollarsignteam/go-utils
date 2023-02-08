@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"strings"
 
 	"github.com/google/uuid"
@@ -41,4 +43,9 @@ func (StringUtil) RemoveAllSpaces(s string) string {
 
 func (StringUtil) UUID() string {
 	return uuid.NewString()
+}
+
+func (StringUtil) MD5(s string) string {
+	hash := md5.Sum([]byte(s))
+	return hex.EncodeToString(hash[:])
 }

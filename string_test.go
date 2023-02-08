@@ -8,16 +8,16 @@ import (
 	"github.com/dollarsignteam/go-utils"
 )
 
-var TestSpacesString = "  Hello \t\r\n - World  \u200B!  "
+var TestSpacesString = "  foo \t\r\n - bar  \u200B!  "
 
 func TestRemoveDuplicateSpaces(t *testing.T) {
-	expected := "Hello - World !"
+	expected := "foo - bar !"
 	result := utils.String.RemoveDuplicateSpaces(TestSpacesString)
 	assert.Equal(t, expected, result)
 }
 
 func TestRemoveAllSpaces(t *testing.T) {
-	expected := "Hello-World!"
+	expected := "foo-bar!"
 	result := utils.String.RemoveAllSpaces(TestSpacesString)
 	assert.Equal(t, expected, result)
 }
@@ -25,6 +25,12 @@ func TestRemoveAllSpaces(t *testing.T) {
 func TestUUID(t *testing.T) {
 	result := utils.String.UUID()
 	assert.Len(t, result, 36)
+}
+
+func TestMD5(t *testing.T) {
+	result := utils.String.MD5(TestSpacesString)
+	expected := "34130b8b17f2e67b2da09cd24f868885"
+	assert.Equal(t, expected, result)
 }
 
 func BenchmarkRemoveDuplicateSpaces(b *testing.B) {
@@ -36,5 +42,11 @@ func BenchmarkRemoveDuplicateSpaces(b *testing.B) {
 func BenchmarkRemoveAllSpaces(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.String.RemoveAllSpaces(TestSpacesString)
+	}
+}
+
+func BenchmarkMD5(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		utils.String.MD5(TestSpacesString)
 	}
 }
