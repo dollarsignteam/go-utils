@@ -33,6 +33,18 @@ func TestMD5(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
+func TestSHA1(t *testing.T) {
+	result := utils.String.SHA1(TestSpacesString)
+	expected := "5045a76071cb10b5fa05b73af1e8e174d4979955"
+	assert.Equal(t, expected, result)
+}
+
+func TestSHA256(t *testing.T) {
+	result := utils.String.SHA256(TestSpacesString)
+	expected := "bafa334ba4639eca91f087ad98a0dcc9d1ac2f82da8beafed8fbaad717a51c6d"
+	assert.Equal(t, expected, result)
+}
+
 func BenchmarkRemoveDuplicateSpaces(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.String.RemoveDuplicateSpaces(TestSpacesString)
@@ -48,5 +60,17 @@ func BenchmarkRemoveAllSpaces(b *testing.B) {
 func BenchmarkMD5(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.String.MD5(TestSpacesString)
+	}
+}
+
+func BenchmarkSHA1(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		utils.String.SHA1(TestSpacesString)
+	}
+}
+
+func BenchmarkSHA256(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		utils.String.SHA256(TestSpacesString)
 	}
 }
