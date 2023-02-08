@@ -3,6 +3,8 @@ package utils
 import (
 	"crypto/rand"
 	"math/big"
+	"strconv"
+	"strings"
 
 	"golang.org/x/exp/constraints"
 )
@@ -63,4 +65,9 @@ func RandomFloat64(min, max float64) float64 {
 	}
 	nBig, _ := rand.Int(rand.Reader, big.NewInt(1<<62))
 	return (float64(nBig.Int64())/float64(1<<62))*(max-min) + min
+}
+
+func ParseFloat64(s string) (float64, error) {
+	s = strings.ReplaceAll(strings.TrimSpace(s), ",", "")
+	return strconv.ParseFloat(s, 64)
 }

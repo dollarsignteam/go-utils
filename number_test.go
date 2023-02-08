@@ -9,7 +9,7 @@ import (
 )
 
 func TestMin(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		x        float64
 		y        float64
 		expected float64
@@ -17,14 +17,14 @@ func TestMin(t *testing.T) {
 		{x: 0, y: 1, expected: 0},
 		{x: 10, y: 1, expected: 1},
 	}
-	for _, tc := range testCases {
-		min := utils.Min(tc.x, tc.y)
-		assert.Equal(t, tc.expected, min)
+	for _, test := range tests {
+		min := utils.Min(test.x, test.y)
+		assert.Equal(t, test.expected, min)
 	}
 }
 
 func TestMax(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		x        float64
 		y        float64
 		expected float64
@@ -32,42 +32,42 @@ func TestMax(t *testing.T) {
 		{x: 0, y: 1, expected: 1},
 		{x: 10, y: 1, expected: 10},
 	}
-	for _, tc := range testCases {
-		min := utils.Max(tc.x, tc.y)
-		assert.Equal(t, tc.expected, min)
+	for _, test := range tests {
+		min := utils.Max(test.x, test.y)
+		assert.Equal(t, test.expected, min)
 	}
 }
 
 func TestMinOf(t *testing.T) {
-	testCases := []struct {
-		s        []float64
+	tests := []struct {
+		input    []float64
 		expected float64
 	}{
-		{s: []float64{}, expected: 0},
-		{s: []float64{10, 2, 4, 1, 6, 8, 2}, expected: 1},
+		{input: []float64{}, expected: 0},
+		{input: []float64{10, 2, 4, 1, 6, 8, 2}, expected: 1},
 	}
-	for _, tc := range testCases {
-		min := utils.MinOf(tc.s)
-		assert.Equal(t, tc.expected, min)
+	for _, test := range tests {
+		min := utils.MinOf(test.input)
+		assert.Equal(t, test.expected, min)
 	}
 }
 
 func TestMaxOf(t *testing.T) {
-	testCases := []struct {
-		s        []float64
+	tests := []struct {
+		input    []float64
 		expected float64
 	}{
-		{s: []float64{}, expected: 0},
-		{s: []float64{1, 2, 4, 10, 6, 8, 2}, expected: 10},
+		{input: []float64{}, expected: 0},
+		{input: []float64{1, 2, 4, 10, 6, 8, 2}, expected: 10},
 	}
-	for _, tc := range testCases {
-		min := utils.MaxOf(tc.s)
-		assert.Equal(t, tc.expected, min)
+	for _, test := range tests {
+		min := utils.MaxOf(test.input)
+		assert.Equal(t, test.expected, min)
 	}
 }
 
 func TestRandomInt64(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		min         int64
 		max         int64
 		expectedMin int64
@@ -76,15 +76,15 @@ func TestRandomInt64(t *testing.T) {
 		{min: 5, max: 10, expectedMin: 5, expectedMax: 10},
 		{min: 5, max: -10, expectedMin: -10, expectedMax: 5},
 	}
-	for _, tc := range testCases {
-		result := utils.RandomInt64(tc.min, tc.max)
-		assert.GreaterOrEqual(t, result, tc.expectedMin)
-		assert.LessOrEqual(t, result, tc.expectedMax)
+	for _, test := range tests {
+		result := utils.RandomInt64(test.min, test.max)
+		assert.GreaterOrEqual(t, result, test.expectedMin)
+		assert.LessOrEqual(t, result, test.expectedMax)
 	}
 }
 
 func TestRandomFloat64(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		min         float64
 		max         float64
 		expectedMin float64
@@ -93,9 +93,29 @@ func TestRandomFloat64(t *testing.T) {
 		{min: 5, max: 10, expectedMin: 5, expectedMax: 10},
 		{min: 5, max: -10, expectedMin: -10, expectedMax: 5},
 	}
-	for _, tc := range testCases {
-		result := utils.RandomFloat64(tc.min, tc.max)
-		assert.GreaterOrEqual(t, result, tc.expectedMin)
-		assert.LessOrEqual(t, result, tc.expectedMax)
+	for _, test := range tests {
+		result := utils.RandomFloat64(test.min, test.max)
+		assert.GreaterOrEqual(t, result, test.expectedMin)
+		assert.LessOrEqual(t, result, test.expectedMax)
+	}
+}
+
+func TestParseFloat64(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected float64
+	}{
+		{input: "123.45", expected: 123.45},
+		{input: "0.1234", expected: 0.1234},
+		{input: "-123.45", expected: -123.45},
+		{input: "-0.1234", expected: -0.1234},
+		{input: "+123.45", expected: 123.45},
+		{input: "+0.1234", expected: 0.1234},
+		{input: " 9,999,999,999.99 ", expected: 9999999999.99},
+		{input: "message", expected: 0},
+	}
+	for _, test := range tests {
+		result, _ := utils.ParseFloat64(test.input)
+		assert.Equal(t, test.expected, result)
 	}
 }
