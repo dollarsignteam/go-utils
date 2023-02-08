@@ -21,20 +21,20 @@ func TestPackageName(t *testing.T) {
 
 func TestUniqueOf(t *testing.T) {
 	tests := []struct {
-		input    []interface{}
-		expected []interface{}
+		input    []any
+		expected []any
 	}{
 		{
-			input:    []interface{}{1, 2, 3, 2, 1},
-			expected: []interface{}{1, 2, 3},
+			input:    []any{1, 2, 3, 2, 1},
+			expected: []any{1, 2, 3},
 		},
 		{
-			input:    []interface{}{"foo", "bar", "baz", "foo"},
-			expected: []interface{}{"foo", "bar", "baz"},
+			input:    []any{"foo", "bar", "baz", "foo"},
+			expected: []any{"foo", "bar", "baz"},
 		},
 		{
-			input:    []interface{}{1, "foo", true, 2, "foo"},
-			expected: []interface{}{1, "foo", true, 2},
+			input:    []any{1, "foo", true, 2, "foo"},
+			expected: []any{1, "foo", true, 2},
 		},
 	}
 	for _, test := range tests {
@@ -43,8 +43,34 @@ func TestUniqueOf(t *testing.T) {
 	}
 }
 
+func TestValueOf(t *testing.T) {
+	var i *int
+	result := utils.ValueOf(i)
+	assert.Equal(t, 0, result)
+
+	value := 5
+	result = utils.ValueOf(&value)
+	assert.Equal(t, value, result)
+
+	var s *string
+	resultStr := utils.ValueOf(s)
+	assert.Equal(t, "", resultStr)
+
+	str := "hello"
+	resultStr = utils.ValueOf(&str)
+	assert.Equal(t, str, resultStr)
+
+	var f *float64
+	resultFloat := utils.ValueOf(f)
+	assert.Equal(t, 0.0, resultFloat)
+
+	floatVal := 3.14
+	resultFloat = utils.ValueOf(&floatVal)
+	assert.Equal(t, floatVal, resultFloat)
+}
+
 func BenchmarkUniqueOf(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		utils.UniqueOf([]interface{}{1, "foo", true, 2, "foo"})
+		utils.UniqueOf([]any{1, "foo", true, 2, "foo"})
 	}
 }

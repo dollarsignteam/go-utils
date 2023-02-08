@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"crypto/md5"
-	"crypto/sha1"
+	"crypto/md5"  // #nosec
+	"crypto/sha1" // #nosec
 	"crypto/sha256"
 	"encoding/hex"
 	"strings"
@@ -48,12 +48,12 @@ func (StringUtil) UUID() string {
 }
 
 func (StringUtil) MD5(s string) string {
-	hash := md5.Sum([]byte(s))
+	hash := md5.Sum([]byte(s)) // #nosec
 	return hex.EncodeToString(hash[:])
 }
 
 func (StringUtil) SHA1(s string) string {
-	hash := sha1.Sum([]byte(s))
+	hash := sha1.Sum([]byte(s)) // #nosec
 	return hex.EncodeToString(hash[:])
 }
 

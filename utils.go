@@ -31,3 +31,11 @@ func UniqueOf[T any](input []T) []T {
 	}
 	return u
 }
+
+func ValueOf[T any](ptr *T) T {
+	if ptr == nil {
+		var v T
+		return v
+	}
+	return *ptr
+}
