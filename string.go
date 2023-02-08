@@ -11,6 +11,7 @@ const (
 	zeroWidthJoiner       = '\u200D'
 	leftToRightMark       = '\u200E'
 	rightToLeftMark       = '\u200F'
+	noBreakingSpace       = '\u00A0'
 	empty                 = ""
 )
 
@@ -21,6 +22,7 @@ var zeroWithReplacer = strings.NewReplacer(
 	string(zeroWidthJoiner), empty,
 	string(leftToRightMark), empty,
 	string(rightToLeftMark), empty,
+	string(noBreakingSpace), empty,
 )
 
 var String StringUtil
