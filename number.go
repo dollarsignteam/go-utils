@@ -51,7 +51,7 @@ func MaxOf[T constraints.Ordered](s []T) T {
 
 func RandomInt64(min, max int64) int64 {
 	if min > max {
-		max, min = min, max
+		min, max = max, min
 	}
 	nBig, _ := rand.Int(rand.Reader, big.NewInt(max-min+1))
 	return nBig.Int64() + min
@@ -59,7 +59,7 @@ func RandomInt64(min, max int64) int64 {
 
 func RandomFloat64(min, max float64) float64 {
 	if min > max {
-		max, min = min, max
+		min, max = max, min
 	}
 	nBig, _ := rand.Int(rand.Reader, big.NewInt(1<<62))
 	return (float64(nBig.Int64())/float64(1<<62))*(max-min) + min
