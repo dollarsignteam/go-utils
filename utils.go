@@ -3,11 +3,7 @@ package utils
 import (
 	"runtime"
 	"strings"
-
-	"github.com/go-playground/validator/v10"
 )
-
-var Validate = validator.New()
 
 func PointerOf[T any](v T) *T {
 	return &v
