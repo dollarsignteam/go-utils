@@ -23,9 +23,22 @@ func TestParseInBangkokLocation(t *testing.T) {
 	assert.Equal(t, expected, bangkokTime.Format(time.RFC3339))
 }
 
+func TestParseInHongKongLocation(t *testing.T) {
+	hongKongTime, err := utils.Time.ParseInHongKongLocation(TestTimeLayout, TestTimeString)
+	expected := "2023-02-07T20:28:39+08:00"
+	assert.Nil(t, err)
+	assert.Equal(t, expected, hongKongTime.Format(time.RFC3339))
+}
+
 func TestInBangkokTime(t *testing.T) {
 	result := utils.Time.InBangkokTime(TestUTCTime)
 	expected := "2023-02-08T03:28:39+07:00"
+	assert.Equal(t, expected, result.Format(time.RFC3339))
+}
+
+func TestInHongKongTime(t *testing.T) {
+	result := utils.Time.InHongKongTime(TestUTCTime)
+	expected := "2023-02-08T04:28:39+08:00"
 	assert.Equal(t, expected, result.Format(time.RFC3339))
 }
 
