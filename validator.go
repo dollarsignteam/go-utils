@@ -6,6 +6,10 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type Result struct {
+	List any `validate:"dive"`
+}
+
 var Validate = validator.New()
 
 var RegExpNumberString = regexp.MustCompile(`^-?([1-9]{1}\d{0,2}(\,\d{3})*(\.\d+)?|[1-9]{1}\d*(\.\d+)?|0(\.\d+)?|(\.\d+)?)$`)
