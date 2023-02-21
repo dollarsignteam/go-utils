@@ -69,8 +69,34 @@ func TestValueOf(t *testing.T) {
 	assert.Equal(t, floatVal, resultFloat)
 }
 
+func TestIsArrayOrSlice(t *testing.T) {
+	slice := []int{1, 2, 3}
+	array := [3]int{4, 5, 6}
+	tests := []struct {
+		Input    any
+		Expected bool
+	}{
+		{Input: nil, Expected: false},
+		{Input: slice, Expected: true},
+		{Input: array, Expected: true},
+		{Input: &slice, Expected: true},
+		{Input: &array, Expected: true},
+	}
+	for _, test := range tests {
+		result := utils.IsArrayOrSlice(test.Input)
+		assert.Equal(t, test.Expected, result)
+	}
+}
+
 func BenchmarkUniqueOf(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.UniqueOf([]any{1, "foo", true, 2, "foo"})
+	}
+}
+
+func BenchmarkIsArrayOrSlice(b *testing.B) {
+	slice := []int{1, 2, 3}
+	for n := 0; n < b.N; n++ {
+		utils.IsArrayOrSlice(&slice)
 	}
 }

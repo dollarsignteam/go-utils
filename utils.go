@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"reflect"
 	"runtime"
 	"strings"
 )
@@ -34,4 +35,12 @@ func ValueOf[T any](ptr *T) T {
 		return v
 	}
 	return *ptr
+}
+
+func IsArrayOrSlice(i any) bool {
+	v := reflect.ValueOf(i)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	return (v.Kind() == reflect.Slice || v.Kind() == reflect.Array)
 }
