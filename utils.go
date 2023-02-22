@@ -6,10 +6,12 @@ import (
 	"strings"
 )
 
+// PointerOf returns a pointer to the input value
 func PointerOf[T any](v T) *T {
 	return &v
 }
 
+// PackageName returns the name of the package that calls it.
 func PackageName() string {
 	pc, _, _, _ := runtime.Caller(1)
 	parts := strings.Split(runtime.FuncForPC(pc).Name(), "/")
@@ -17,6 +19,8 @@ func PackageName() string {
 	return pkg[0]
 }
 
+// UniqueOf removes duplicates from a slice of any type
+// and returns a new slice containing only the unique elements.
 func UniqueOf[T any](input []T) []T {
 	u := make([]T, 0, len(input))
 	m := make(map[any]struct{})
@@ -29,6 +33,7 @@ func UniqueOf[T any](input []T) []T {
 	return u
 }
 
+// ValueOf takes a pointer to a value of any type and returns the value.
 func ValueOf[T any](ptr *T) T {
 	if ptr == nil {
 		var v T
@@ -37,6 +42,8 @@ func ValueOf[T any](ptr *T) T {
 	return *ptr
 }
 
+// IsArrayOrSlice takes a value of any type
+// and returns a boolean indicating if it is a slice or an array.
 func IsArrayOrSlice(i any) bool {
 	v := reflect.ValueOf(i)
 	if v.Kind() == reflect.Ptr {
