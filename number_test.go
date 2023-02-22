@@ -33,8 +33,8 @@ func TestMax(t *testing.T) {
 		{x: 10, y: 1, expected: 10},
 	}
 	for _, test := range tests {
-		min := utils.Max(test.x, test.y)
-		assert.Equal(t, test.expected, min)
+		max := utils.Max(test.x, test.y)
+		assert.Equal(t, test.expected, max)
 	}
 }
 
@@ -61,8 +61,8 @@ func TestMaxOf(t *testing.T) {
 		{input: []float64{1, 2, 4, 10, 6, 8, 2}, expected: 10},
 	}
 	for _, test := range tests {
-		min := utils.MaxOf(test.input)
-		assert.Equal(t, test.expected, min)
+		max := utils.MaxOf(test.input)
+		assert.Equal(t, test.expected, max)
 	}
 }
 
