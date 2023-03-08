@@ -51,3 +51,18 @@ func IsArrayOrSlice(i any) bool {
 	}
 	return (v.Kind() == reflect.Slice || v.Kind() == reflect.Array)
 }
+
+// BoolToInt converts a boolean value to an integer
+// (1 for true, 0 for false).
+func BoolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+// IntToBool converts an integer value to a boolean
+// (true for non-zero values, false for zero).
+func IntToBool(i int) bool {
+	return i != 0
+}

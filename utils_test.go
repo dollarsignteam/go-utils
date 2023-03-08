@@ -88,6 +88,35 @@ func TestIsArrayOrSlice(t *testing.T) {
 	}
 }
 
+func TestBoolToInt(t *testing.T) {
+	tests := []struct {
+		input    bool
+		expected int
+	}{
+		{input: true, expected: 1},
+		{input: false, expected: 0},
+	}
+	for _, test := range tests {
+		result := utils.BoolToInt(test.input)
+		assert.Equal(t, test.expected, result)
+	}
+}
+
+func TestIntToBool(t *testing.T) {
+	tests := []struct {
+		input    int
+		expected bool
+	}{
+		{input: 1, expected: true},
+		{input: 0, expected: false},
+		{input: -1, expected: true},
+	}
+	for _, test := range tests {
+		result := utils.IntToBool(test.input)
+		assert.Equal(t, test.expected, result)
+	}
+}
+
 func BenchmarkUniqueOf(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.UniqueOf([]any{1, "foo", true, 2, "foo"})

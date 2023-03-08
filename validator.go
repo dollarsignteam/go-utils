@@ -19,7 +19,7 @@ var Validate = validator.New()
 var RegExpNumberString = regexp.MustCompile(`^-?([1-9]{1}\d{0,2}(\,\d{3})*(\.\d+)?|[1-9]{1}\d*(\.\d+)?|0(\.\d+)?|(\.\d+)?)$`)
 
 func init() {
-	Validate.RegisterValidation("number_string", ValidateNumberString)
+	_ = Validate.RegisterValidation("number_string", ValidateNumberString)
 }
 
 // ValidateNumberString validates a given number string by checking whether
