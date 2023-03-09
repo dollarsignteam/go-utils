@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"reflect"
 	"regexp"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -26,4 +28,23 @@ func init() {
 // it matches the RegExpNumberString regular expression pattern.
 func ValidateNumberString(fl validator.FieldLevel) bool {
 	return RegExpNumberString.MatchString(fl.Field().String())
+}
+
+// GetJSONTagName returns the name of the JSON tag associated with a given reflect.StructField.
+func GetJSONTagName(field reflect.StructField) string {
+	tagName := strings.SplitN(field.Tag.Get("json"), ",", 2)[0]
+	if tagName == "-" {
+		return ""
+	}
+	return tagName
+}
+
+// ValidateStruct validates the fields of a struct using the validator library.
+// if validation fails, it calls the ParseValidationError() function
+// to convert ValidationErrors into a ValidationError error type.
+func ValidateStruct(s any) error {
+	if err := Validate.Struct(s); err != nil {
+		return ParseValidationError(err)
+	}
+	return nil
 }
