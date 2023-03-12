@@ -13,7 +13,7 @@ const (
 	AsiaHongKongLocation = "Asia/Hong_Kong"
 )
 
-// TimeUtil utility instance
+// Time utility instance
 var Time TimeUtil
 var (
 	BangkokTimeLocation, _  = time.LoadLocation(AsiaBangkokLocation)
