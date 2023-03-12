@@ -16,6 +16,8 @@ const ErrCodeSomethingWentWrong = "SOMETHING_WENT_WRONG"
 // Error message constant for CommonError
 const ErrMessageSomethingWentWrong = "Something went wrong"
 
+const errMessageValidationFailed = "Key: '%s', Error: Validation for '%s' failed on the '%s' tag"
+
 // CommonError type for generic errors with status codes and error codes
 type CommonError struct {
 	StatusCode    int    `json:"statusCode"`   // HTTP status code
@@ -132,7 +134,7 @@ func ParseValidationError(err error) ValidationError {
 			errDetailList[i] = ValidationErrorDetail{
 				Field:   e.Field(),
 				Tag:     e.Tag(),
-				Message: e.Error(),
+				Message: fmt.Sprintf(errMessageValidationFailed, e.StructNamespace(), e.Field(), e.Tag()),
 			}
 		}
 		return ValidationError{

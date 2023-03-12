@@ -21,7 +21,7 @@ func TestParseAndValidate_Error(t *testing.T) {
 func TestParseAndValidate_Failed(t *testing.T) {
 	result := Result{}
 	err := utils.JSON.ParseAndValidate("{}", &result)
-	assert.EqualError(t, err, "Key: 'Result.Data' Error:Field validation for 'Data' failed on the 'required' tag")
+	assert.EqualError(t, err, "Validation failed for 'data'")
 }
 
 func TestParseAndValidate(t *testing.T) {
@@ -41,7 +41,7 @@ func TestParseAndValidate_Slice(t *testing.T) {
 func TestParseAndValidate_Slice_Failed(t *testing.T) {
 	result := []Result{}
 	err := utils.JSON.ParseAndValidate(`[{"data": ""}]`, &result)
-	assert.EqualError(t, err, "Key: 'Result.List[0].Data' Error:Field validation for 'Data' failed on the 'required' tag")
+	assert.EqualError(t, err, "Validation failed for 'data'")
 }
 
 func TestParse(t *testing.T) {

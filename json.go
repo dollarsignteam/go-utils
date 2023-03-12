@@ -15,9 +15,9 @@ func (JSONUtil) ParseAndValidate(data string, result any) error {
 		return err
 	}
 	if IsArrayOrSlice(result) {
-		return Validate.Struct(Result{List: result})
+		return ValidateStruct(Result{List: result})
 	}
-	return Validate.Struct(result)
+	return ValidateStruct(result)
 }
 
 // Parse parses JSON data into the given result struct.

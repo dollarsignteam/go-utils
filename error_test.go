@@ -120,7 +120,7 @@ func TestParseValidationError(t *testing.T) {
 				{
 					Field:   "Balance",
 					Tag:     "number_string",
-					Message: "Key: 'Data.Balance' Error:Field validation for 'Balance' failed on the 'number_string' tag",
+					Message: "Key: 'Data.Balance', Error: Validation for 'Balance' failed on the 'number_string' tag",
 				},
 			},
 			Errors: err.(validator.ValidationErrors),
