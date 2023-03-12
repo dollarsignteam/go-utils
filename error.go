@@ -23,17 +23,27 @@ type CommonError struct {
 	ErrorInstance error  `json:"errorMessage"` // The actual error instance
 }
 
-// ValidationError type for errors related to validation, with error details
+// ValidationError represents an error related to validation, with error details.
 type ValidationError struct {
-	ErrorMessage    string                  `json:"errorMessage"`              // Overall error message
-	ErrorDetailList []ValidationErrorDetail `json:"errorDetailList,omitempty"` // Optional list of error details
+	ErrorMessage string                     `json:"errorMessage"`      // Overall error message
+	Details      []ValidationErrorDetail    `json:"details,omitempty"` // Optional list of error details
+	Errors       validator.ValidationErrors `json:"-"`                 // The actual validation errors
 }
 
-// ValidationErrorDetail type for individual error details, with a field, tag, and message
+// ValidationErrorDetail represents an individual error detail, with a field, tag, and message.
 type ValidationErrorDetail struct {
 	Field   string `json:"field" example:"ID"`                                                                              // Field that caused the validation error
 	Tag     string `json:"tag" example:"required"`                                                                          // Validation tag that caused the error
 	Message string `json:"message" example:"Key: 'Member.ID' Error:Field validation for 'ID' failed on the 'required' tag"` // Full error message
+}
+
+// ErrorResponse represents an error response with error code, message, description, and validation errors
+type ErrorResponse struct {
+	StatusCode       int                     `json:"statusCode" example:"500"`                                     // HTTP status code
+	ErrorCode        string                  `json:"errorCode,omitempty" example:"SOMETHING_WENT_WRONG"`           // Specific error code
+	ErrorMessage     string                  `json:"errorMessage,omitempty" example:"Oops, something went wrong!"` // Custom error message
+	ErrorDescription string                  `json:"errorDescription,omitempty" example:"Something went wrong"`    // The actual error message
+	ErrorValidation  []ValidationErrorDetail `json:"errorValidation,omitempty"`                                    // List of validation errors
 }
 
 // Error function for CommonError to return the error message
@@ -126,8 +136,9 @@ func ParseValidationError(err error) ValidationError {
 			}
 		}
 		return ValidationError{
-			ErrorMessage:    fmt.Sprintf("Validation failed for %s", strings.Join(fieldList, ", ")),
-			ErrorDetailList: errDetailList,
+			ErrorMessage: fmt.Sprintf("Validation failed for %s", strings.Join(fieldList, ", ")),
+			Details:      errDetailList,
+			Errors:       err,
 		}
 	default:
 		return ValidationError{

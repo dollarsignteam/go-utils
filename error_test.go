@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/dollarsignteam/go-utils"
@@ -115,13 +116,14 @@ func TestParseValidationError(t *testing.T) {
 		result := utils.ParseValidationError(err)
 		expected := utils.ValidationError{
 			ErrorMessage: "Validation failed for 'Balance'",
-			ErrorDetailList: []utils.ValidationErrorDetail{
+			Details: []utils.ValidationErrorDetail{
 				{
 					Field:   "Balance",
 					Tag:     "number_string",
 					Message: "Key: 'Data.Balance' Error:Field validation for 'Balance' failed on the 'number_string' tag",
 				},
 			},
+			Errors: err.(validator.ValidationErrors),
 		}
 		assert.Equal(t, expected, result)
 	})
