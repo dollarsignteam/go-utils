@@ -87,6 +87,15 @@ func TestNewCommonErrorSomethingWentWrong(t *testing.T) {
 	assert.Equal(t, err.Error(), commonErr.Error())
 }
 
+func TestNewCommonErrorBadRequest(t *testing.T) {
+	err := errors.New("test error")
+	commonErr := utils.NewCommonErrorBadRequest(err)
+	assert.Equal(t, http.StatusBadRequest, commonErr.StatusCode)
+	assert.Equal(t, utils.ErrCodeBadRequest, commonErr.ErrorCode)
+	assert.Equal(t, err, commonErr.ErrorInstance)
+	assert.Equal(t, err.Error(), commonErr.Error())
+}
+
 func TestParseCommonError(t *testing.T) {
 	err := errors.New("test error")
 	commonErr := utils.CommonError{

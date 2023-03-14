@@ -99,11 +99,21 @@ func (e ValidationError) Error() string {
 }
 
 // NewCommonErrorSomethingWentWrong creates a new CommonError instance
-// with a default error message and the given error as the ErrorInstance field.
+// with `Something went wrong`  ErrorInstance field.
 func NewCommonErrorSomethingWentWrong(err error) CommonError {
 	return CommonError{
 		StatusCode:    http.StatusInternalServerError,
 		ErrorCode:     ErrCodeSomethingWentWrong,
+		ErrorInstance: err,
+	}
+}
+
+// NewCommonErrorBadRequest creates a new CommonError instance
+// with `Bad request`  ErrorInstance field.
+func NewCommonErrorBadRequest(err error) CommonError {
+	return CommonError{
+		StatusCode:    http.StatusBadRequest,
+		ErrorCode:     ErrCodeBadRequest,
 		ErrorInstance: err,
 	}
 }
