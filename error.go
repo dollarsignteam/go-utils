@@ -8,13 +8,22 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
 )
 
-// Error code constant for CommonError
-const ErrCodeSomethingWentWrong = "SOMETHING_WENT_WRONG"
+// Error code constants
+const (
+	ErrCodeSomethingWentWrong = "SOMETHING_WENT_WRONG"
+	ErrCodeBadRequest         = "BAD_REQUEST"
+	ErrCodeUnauthorized       = "UNAUTHORIZED"
+)
 
-// Error message constant for CommonError
-const ErrMessageSomethingWentWrong = "Something went wrong"
+// Error message constants
+const (
+	ErrMessageSomethingWentWrong = "Something went wrong"
+	ErrMessageBadRequest         = "Bad request"
+	ErrMessageUnauthorized       = "Unauthorized"
+)
 
 const errMessageValidationFailed = "Key: '%s', Error: Validation for '%s' failed on the '%s' tag"
 
@@ -147,4 +156,52 @@ func ParseValidationError(err error) ValidationError {
 			ErrorMessage: err.Error(),
 		}
 	}
+}
+
+// ParseErrorResponse converts an error into a ErrorResponse.
+// If the input error is a ErrorResponse, it's returned as is.
+func ParseErrorResponse(err error) ErrorResponse {
+	resp := ErrorResponse{
+		StatusCode:   http.StatusInternalServerError,
+		ErrorCode:    ErrCodeSomethingWentWrong,
+		ErrorMessage: err.Error(),
+	}
+	switch err := err.(type) {
+	case *echo.HTTPError:
+		resp.StatusCode = err.Code
+		switch resp.StatusCode {
+		case http.StatusBadRequest:
+			resp.ErrorCode = ErrCodeBadRequest
+			resp.ErrorMessage = ErrMessageBadRequest
+		case http.StatusUnauthorized:
+			resp.ErrorCode = ErrCodeUnauthorized
+			resp.ErrorMessage = ErrMessageUnauthorized
+		default:
+			message := fmt.Sprintf("%v", err.Message)
+			if err.Internal != nil {
+				message = fmt.Sprintf("%s, %s", message, err.Internal)
+			}
+			resp.ErrorMessage = message
+		}
+	case CommonError:
+		resp.StatusCode = err.StatusCode
+		resp.ErrorCode = err.ErrorCode
+		if err.ErrorInstance != nil {
+			resp.ErrorMessage = err.ErrorInstance.Error()
+			switch e := err.ErrorInstance.(type) {
+			case ValidationError, validator.ValidationErrors:
+				errValidator := ParseValidationError(e)
+				resp.ErrorMessage = errValidator.ErrorMessage
+				resp.ErrorValidation = errValidator.Details
+			}
+		}
+	case ValidationError, validator.ValidationErrors:
+		errValidator := ParseValidationError(err)
+		resp.StatusCode = http.StatusBadRequest
+		resp.ErrorCode = ErrCodeBadRequest
+		resp.ErrorMessage = errValidator.ErrorMessage
+		resp.ErrorValidation = errValidator.Details
+		resp.ErrorValidation = errValidator.Details
+	}
+	return resp
 }

@@ -44,6 +44,11 @@ func (EchoUtil) DefaultRootHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"message": "200 OK"})
 }
 
+// NoContentHandler handles return no content endpoint
+func (EchoUtil) NoContentHandler(c echo.Context) error {
+	return c.NoContent(http.StatusNoContent)
+}
+
 // New creates a new instance of the Echo framework
 func (EchoUtil) New() *echo.Echo {
 	e := echo.New()
@@ -53,5 +58,6 @@ func (EchoUtil) New() *echo.Echo {
 	e.Binder = &EchoBinderWithValidation{}
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.GET("/", Echo.DefaultRootHandler)
+	e.GET("/favicon.ico", Echo.NoContentHandler)
 	return e
 }

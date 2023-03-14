@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/dollarsignteam/go-utils"
@@ -189,6 +190,78 @@ func TestIsValidationError(t *testing.T) {
 		result := utils.IsValidationError(test.Input)
 		assert.Equal(t, test.Expected, result)
 	}
+}
+
+func TestParseErrorResponse(t *testing.T) {
+	t.Run("HTTPErrorBadRequest", func(t *testing.T) {
+		err := echo.ErrBadRequest
+		resp := utils.ParseErrorResponse(err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.Equal(t, utils.ErrCodeBadRequest, resp.ErrorCode)
+		assert.Equal(t, utils.ErrMessageBadRequest, resp.ErrorMessage)
+	})
+
+	t.Run("HTTPErrorUnauthorized", func(t *testing.T) {
+		err := echo.ErrUnauthorized
+		resp := utils.ParseErrorResponse(err)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+		assert.Equal(t, utils.ErrCodeUnauthorized, resp.ErrorCode)
+		assert.Equal(t, utils.ErrMessageUnauthorized, resp.ErrorMessage)
+	})
+
+	t.Run("HTTPErrorInternalError", func(t *testing.T) {
+		err := &echo.HTTPError{
+			Code:     http.StatusInternalServerError,
+			Message:  "Oops, something went wrong!",
+			Internal: errors.New("internal error"),
+		}
+		expected := "Oops, something went wrong!, internal error"
+		resp := utils.ParseErrorResponse(err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.Equal(t, utils.ErrCodeSomethingWentWrong, resp.ErrorCode)
+		assert.Equal(t, expected, resp.ErrorMessage)
+	})
+
+	t.Run("CommonErrorWithValidationError", func(t *testing.T) {
+		data := Data{Balance: "foo"}
+		errValidation := utils.ValidateStruct(data)
+		errMessage := "Validation failed for 'Balance'"
+		err := utils.CommonError{
+			StatusCode:    http.StatusBadRequest,
+			ErrorCode:     utils.ErrCodeBadRequest,
+			ErrorInstance: errValidation,
+		}
+		resp := utils.ParseErrorResponse(err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.Equal(t, utils.ErrCodeBadRequest, resp.ErrorCode)
+		assert.Equal(t, errMessage, resp.ErrorMessage)
+		assert.Equal(t, errValidation.(utils.ValidationError).Details, resp.ErrorValidation)
+	})
+
+	t.Run("CommonErrorWithValidationErrors", func(t *testing.T) {
+		data := Data{Balance: "foo"}
+		errValidation := utils.Validate.Struct(data)
+		errMessage := "Validation failed for 'Balance'"
+		err := utils.CommonError{
+			StatusCode:    http.StatusBadRequest,
+			ErrorCode:     utils.ErrCodeBadRequest,
+			ErrorInstance: errValidation,
+		}
+		resp := utils.ParseErrorResponse(err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.Equal(t, utils.ErrCodeBadRequest, resp.ErrorCode)
+		assert.Equal(t, errMessage, resp.ErrorMessage)
+	})
+
+	t.Run("ValidationErrorAndValidationErrors", func(t *testing.T) {
+		data := Data{Balance: "foo"}
+		errMessage := "Validation failed for 'Balance'"
+		errValidation := utils.Validate.Struct(data)
+		resp := utils.ParseErrorResponse(errValidation)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.Equal(t, utils.ErrCodeBadRequest, resp.ErrorCode)
+		assert.Equal(t, errMessage, resp.ErrorMessage)
+	})
 }
 
 func BenchmarkParseValidationError(b *testing.B) {

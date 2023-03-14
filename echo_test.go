@@ -26,6 +26,16 @@ func TestDefaultRootHandler(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestNoContentHandler(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	err := utils.Echo.NoContentHandler(c)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
+	assert.NoError(t, err)
+}
+
 func TestEchoBinderWithValidation_Bind(t *testing.T) {
 	type TestRequest struct {
 		Field1 string `json:"field1" validate:"required"`
