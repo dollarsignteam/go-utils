@@ -1,3 +1,19 @@
 {
-  "cSpell.words": ["datetime", "Dollarsign", "labstack", "Println"]
+  "cSpell.words": [
+    "bytebufferpool",
+    "datetime",
+    "davecgh",
+    "difflib",
+    "Dollarsign",
+    "fasttemplate",
+    "gommon",
+    "gopkg",
+    "isatty",
+    "labstack",
+    "leodido",
+    "mattn",
+    "pmezard",
+    "Println",
+    "valyala"
+  ]
 }
