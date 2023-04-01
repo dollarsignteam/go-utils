@@ -47,9 +47,11 @@ func ExampleParseFloat64() {
 }
 
 func ExampleRandomInt64() {
-	fmt.Println(utils.RandomInt64(0, 10))
+	fmt.Println(utils.RandomInt64(10, 10))
+	// Output: 10
 }
 
 func ExampleRandomFloat64() {
-	fmt.Println(utils.RandomFloat64(0, 10))
+	fmt.Println(utils.RandomFloat64(10.5, 10.5))
+	// Output: 10.5
 }
