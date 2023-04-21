@@ -3,75 +3,69 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 )
 
 var EchoJWT EchoJWTUtil
 
 type EchoJWTUtil struct {
-	config EchoJWTConfig
+	signingKey    []byte
+	expiresTTL    time.Duration
+	echoJWTConfig echojwt.Config
 }
 
 type EchoJWTConfig struct {
-	SigningKey     string
-	ExpiresTTL     time.Duration
-	ParseTokenFunc func(c echo.Context, auth string) (any, error)
+	SigningKey string
+	ExpiresTTL time.Duration
+}
+
+type JWTToken struct {
+	ID     string
+	Token  string
+	Claims jwt.RegisteredClaims
 }
 
 func (EchoJWTUtil) New(config EchoJWTConfig) *EchoJWTUtil {
+	signingKey := []byte(config.SigningKey)
 	return &EchoJWTUtil{
-		config: config,
+		signingKey: signingKey,
+		expiresTTL: config.ExpiresTTL,
+		echoJWTConfig: echojwt.Config{
+			SigningKey: signingKey,
+		},
 	}
 }
 
 func (eJWT EchoJWTUtil) JWTAuth() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			// Get the token from the Authorization header
-			authHeader := c.Request().Header.Get("Authorization")
-			if authHeader == "" {
-				return c.String(http.StatusUnauthorized, "missing Authorization header")
-			}
-
-			// Split the token from the "Bearer " prefix
-			auth := strings.Split(authHeader, "Bearer ")
-			if len(auth) != 2 {
-				return c.String(http.StatusUnauthorized, "invalid Authorization header format")
-			}
-
-			// Parse the token and check for validity and expiration
-			token, err := eJWT.ParseToken(auth[1])
-			if err != nil {
-				return c.String(http.StatusUnauthorized, fmt.Sprintf("invalid token: %v", err))
-			}
-
-			// Set the user information in the echo context and continue the request
-			c.Set("user", token)
-			return next(c)
-		}
-	}
+	return echojwt.WithConfig(eJWT.echoJWTConfig)
 }
 
-func (eJWT EchoJWTUtil) CreateToken(claims jwt.MapClaims) (string, error) {
-	// Set the token expiration time
-	expirationTime := time.Now().Add(eJWT.config.ExpiresTTL).Unix()
-
-	// Add the expiration to the claims
-	claims["exp"] = expirationTime
-
-	// Create the JWT token with the claims and signing key
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(eJWT.config.SigningKey))
-	if err != nil {
-		return "", err
+func (eJWT EchoJWTUtil) CreateToken(claims jwt.RegisteredClaims) (JWTToken, error) {
+	if claims.ID == "" {
+		claims.ID = String.UUID()
 	}
-
-	return tokenString, nil
+	timeNow := time.Now()
+	if claims.IssuedAt == nil {
+		claims.IssuedAt = jwt.NewNumericDate(timeNow)
+	}
+	if claims.ExpiresAt == nil {
+		claims.ExpiresAt = jwt.NewNumericDate(timeNow.Add(eJWT.expiresTTL))
+	}
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token, err := jwtToken.SignedString(eJWT.signingKey)
+	if err != nil {
+		return JWTToken{}, err
+	}
+	return JWTToken{
+		ID:     claims.ID,
+		Token:  token,
+		Claims: claims,
+	}, nil
 }
 
 func (eJWT EchoJWTUtil) ParseToken(tokenString string) (jwt.MapClaims, error) {
@@ -80,7 +74,7 @@ func (eJWT EchoJWTUtil) ParseToken(tokenString string) (jwt.MapClaims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("invalid signing method")
 		}
-		return []byte(eJWT.config.SigningKey), nil
+		return eJWT.signingKey, nil
 	})
 	if err != nil {
 		return nil, err
