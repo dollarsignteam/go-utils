@@ -9,24 +9,30 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// EchoJWT utility instance
 var EchoJWT EchoJWTUtil
 
+// EchoJWTUtil is a utility struct that provides methods
+// for working with JWT tokens in the context of the Echo web framework
 type EchoJWTUtil struct {
-	config        EchoJWTConfig
-	echoJWTConfig echojwt.Config
+	config        EchoJWTConfig  // The configuration for EchoJWTUtil
+	echoJWTConfig echojwt.Config // The configuration for the echojwt library
 }
 
+// JWTToken is a helper struct for returning signed JWT tokens
 type JWTToken struct {
-	SignedString string
-	Claims       jwt.RegisteredClaims
+	SignedString string               // The signed token as a string
+	Claims       jwt.RegisteredClaims // The claims included in the token
 }
 
+// EchoJWTConfig is the configuration struct for EchoJWTUtil
 type EchoJWTConfig struct {
-	SigningKey        string
-	ExpiresTTL        time.Duration
-	BeforeSuccessFunc func(token *jwt.Token, c echo.Context) error
+	SigningKey        string                                       // The signing key used to sign JWT tokens
+	ExpiresTTL        time.Duration                                // The duration until which the token should be valid
+	BeforeSuccessFunc func(token *jwt.Token, c echo.Context) error // A callback function to execute before a successful authentication
 }
 
+// New creates and returns a new instance of EchoJWTUtil
 func (EchoJWTUtil) New(config EchoJWTConfig) *EchoJWTUtil {
 	echoJWTUtil := &EchoJWTUtil{
 		config: config,
@@ -38,6 +44,7 @@ func (EchoJWTUtil) New(config EchoJWTConfig) *EchoJWTUtil {
 	return echoJWTUtil
 }
 
+// CreateToken creates and returns a new JWTToken
 func (eJWT EchoJWTUtil) CreateToken(claims jwt.RegisteredClaims) JWTToken {
 	if claims.ID == "" {
 		claims.ID = String.UUID()
@@ -56,13 +63,17 @@ func (eJWT EchoJWTUtil) CreateToken(claims jwt.RegisteredClaims) JWTToken {
 	}
 }
 
-func (eJWT EchoJWTUtil) KeyFunc(token *jwt.Token) (any, error) {
+// KeyFunc is a helper function used by ParseToken
+// to extract the signing key from the EchoJWTConfig object
+func (eJWT EchoJWTUtil) KeyFunc(token *jwt.Token) (interface{}, error) {
 	if token.Method.Alg() != jwt.SigningMethodHS256.Name {
 		return nil, fmt.Errorf("unexpected jwt signing method=%v", token.Header["alg"])
 	}
 	return []byte(eJWT.config.SigningKey), nil
 }
 
+// ParseToken is a helper function used to parse
+// and validate JWT tokens using the echo-jwt library
 func (eJWT EchoJWTUtil) ParseToken(signedToken string) (*jwt.Token, error) {
 	token, err := jwt.ParseWithClaims(signedToken, &jwt.RegisteredClaims{}, eJWT.KeyFunc)
 	if err != nil {
@@ -71,7 +82,9 @@ func (eJWT EchoJWTUtil) ParseToken(signedToken string) (*jwt.Token, error) {
 	return token, nil
 }
 
-func (eJWT EchoJWTUtil) ParseTokenFunc(c echo.Context, auth string) (any, error) {
+// ParseTokenFunc is a callback function used to parse
+// and validate JWT tokens within the context of the echo-jwt middleware
+func (eJWT EchoJWTUtil) ParseTokenFunc(c echo.Context, auth string) (interface{}, error) {
 	token, err := eJWT.ParseToken(auth)
 	if err != nil {
 		return nil, err
@@ -84,6 +97,8 @@ func (eJWT EchoJWTUtil) ParseTokenFunc(c echo.Context, auth string) (any, error)
 	return token, nil
 }
 
+// JWTAuth returns a new instance of the echo-jwt middleware,
+// configured with the current EchoJWTConfig object
 func (eJWT EchoJWTUtil) JWTAuth() echo.MiddlewareFunc {
 	return echojwt.WithConfig(eJWT.echoJWTConfig)
 }
