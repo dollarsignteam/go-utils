@@ -136,3 +136,25 @@ func BenchmarkJWTAuth(b *testing.B) {
 		e.ServeHTTP(res, req)
 	}
 }
+
+func TestGetClaims(t *testing.T) {
+	echoJWT := utils.EchoJWT.New(testEchoJWTConfig)
+	claims := jwt.RegisteredClaims{
+		ID:        "test",
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+	}
+	jwtToken := echoJWT.CreateToken(claims)
+	token, _ := echoJWT.ParseToken(jwtToken.SignedString)
+	result, err := echoJWT.GetClaims(token)
+	assert.Nil(t, err)
+	assert.Equal(t, &claims, result)
+}
+
+func TestGetClaims_InvalidToken(t *testing.T) {
+	echoJWT := utils.EchoJWT.New(testEchoJWTConfig)
+	token := &jwt.Token{}
+	result, err := echoJWT.GetClaims(token)
+	assert.Nil(t, result)
+	assert.EqualError(t, err, "invalid token claims")
+}

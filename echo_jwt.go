@@ -102,3 +102,13 @@ func (eJWT EchoJWTUtil) ParseTokenFunc(c echo.Context, auth string) (interface{}
 func (eJWT EchoJWTUtil) JWTAuth() echo.MiddlewareFunc {
 	return echojwt.WithConfig(eJWT.echoJWTConfig)
 }
+
+// GetClaims retrieves and validates JWT claims.
+// It takes a JWT token and returns the converted claims
+func (eJWT EchoJWTUtil) GetClaims(token *jwt.Token) (*jwt.RegisteredClaims, error) {
+	claims, ok := token.Claims.(*jwt.RegisteredClaims)
+	if !ok {
+		return nil, fmt.Errorf("invalid token claims")
+	}
+	return claims, nil
+}
