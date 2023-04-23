@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
@@ -55,18 +55,28 @@ func TestParseToken(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestParseToken_InvalidClaims(t *testing.T) {
+	echoJWT := utils.EchoJWT.New(testEchoJWTConfig)
+	claims := jwt.MapClaims{"jti": true}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, _ := token.SignedString([]byte(testEchoJWTConfig.SigningKey))
+	result, err := echoJWT.ParseToken(signedToken)
+	assert.Nil(t, result)
+	assert.EqualError(t, err, "json: cannot unmarshal bool into Go struct field RegisteredClaims.jti of type string")
+}
+
 func TestParseToken_InvalidSigningKey(t *testing.T) {
 	echoJWT := utils.EchoJWT.New(testEchoJWTConfig)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, testClaims)
 	signedToken, _ := token.SignedString([]byte("wrong-secret-key"))
 	_, err := echoJWT.ParseToken(signedToken)
-	assert.EqualError(t, err, "token signature is invalid: signature is invalid")
+	assert.EqualError(t, err, "signature is invalid")
 }
 
 func TestParseTokenFunc(t *testing.T) {
 	echoJWT := utils.EchoJWT.New(testEchoJWTConfig)
 	_, err := echoJWT.ParseTokenFunc(nil, "")
-	assert.EqualError(t, err, "token is malformed: token contains an invalid number of segments")
+	assert.EqualError(t, err, "token contains an invalid number of segments")
 }
 
 func TestParseTokenFunc_InvalidToken(t *testing.T) {
