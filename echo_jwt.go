@@ -15,7 +15,7 @@ var EchoJWT EchoJWTUtil
 // EchoJWTUtil is a utility struct that provides methods
 // for working with JWT tokens in the context of the Echo web framework
 type EchoJWTUtil struct {
-	config        EchoJWTConfig  // The configuration for EchoJWTUtil
+	Config        EchoJWTConfig  // The configuration for EchoJWTUtil
 	echoJWTConfig echojwt.Config // The configuration for the echojwt library
 }
 
@@ -35,7 +35,7 @@ type EchoJWTConfig struct {
 // New creates and returns a new instance of EchoJWTUtil
 func (EchoJWTUtil) New(config EchoJWTConfig) *EchoJWTUtil {
 	echoJWTUtil := &EchoJWTUtil{
-		config: config,
+		Config: config,
 		echoJWTConfig: echojwt.Config{
 			SigningKey: []byte(config.SigningKey),
 		},
@@ -53,10 +53,10 @@ func (eJWT EchoJWTUtil) CreateToken(claims jwt.RegisteredClaims) JWTToken {
 		claims.IssuedAt = jwt.NewNumericDate(time.Now())
 	}
 	if claims.ExpiresAt == nil {
-		claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(eJWT.config.ExpiresTTL))
+		claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(eJWT.Config.ExpiresTTL))
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, _ := token.SignedString([]byte(eJWT.config.SigningKey))
+	signedToken, _ := token.SignedString([]byte(eJWT.Config.SigningKey))
 	return JWTToken{
 		SignedString: signedToken,
 		Claims:       claims,
@@ -69,7 +69,7 @@ func (eJWT EchoJWTUtil) KeyFunc(token *jwt.Token) (interface{}, error) {
 	if token.Method.Alg() != jwt.SigningMethodHS256.Name {
 		return nil, fmt.Errorf("unexpected jwt signing method=%v", token.Header["alg"])
 	}
-	return []byte(eJWT.config.SigningKey), nil
+	return []byte(eJWT.Config.SigningKey), nil
 }
 
 // ParseToken is a helper function used to parse
@@ -89,8 +89,8 @@ func (eJWT EchoJWTUtil) ParseTokenFunc(c echo.Context, auth string) (interface{}
 	if err != nil {
 		return nil, err
 	}
-	if eJWT.config.BeforeSuccessFunc != nil {
-		if err := eJWT.config.BeforeSuccessFunc(token, c); err != nil {
+	if eJWT.Config.BeforeSuccessFunc != nil {
+		if err := eJWT.Config.BeforeSuccessFunc(token, c); err != nil {
 			return nil, err
 		}
 	}
