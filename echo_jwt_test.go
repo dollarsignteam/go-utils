@@ -123,3 +123,16 @@ func TestJWTAuth(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t, testClaims.Subject, res.Body.String())
 }
+
+func BenchmarkJWTAuth(b *testing.B) {
+	e := echo.New()
+	echoJWT := utils.EchoJWT.New(testEchoJWTConfig)
+	e.Use(echoJWT.JWTAuth())
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	res := httptest.NewRecorder()
+
+	for i := 0; i < b.N; i++ {
+		e.ServeHTTP(res, req)
+	}
+}
