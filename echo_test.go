@@ -116,7 +116,7 @@ func TestEchoBinderWithValidation_BindHeaders(t *testing.T) {
 	tests := []struct {
 		name           string
 		headers        map[string]string
-		expectedResult interface{}
+		expectedResult any
 		expectedError  error
 	}{
 		{

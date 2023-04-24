@@ -65,7 +65,7 @@ func (eJWT EchoJWTUtil) CreateToken(claims jwt.RegisteredClaims) JWTToken {
 
 // KeyFunc is a helper function used by ParseToken
 // to extract the signing key from the EchoJWTConfig object
-func (eJWT EchoJWTUtil) KeyFunc(token *jwt.Token) (interface{}, error) {
+func (eJWT EchoJWTUtil) KeyFunc(token *jwt.Token) (any, error) {
 	if token.Method.Alg() != jwt.SigningMethodHS256.Name {
 		return nil, fmt.Errorf("unexpected jwt signing method=%v", token.Header["alg"])
 	}
@@ -84,7 +84,7 @@ func (eJWT EchoJWTUtil) ParseToken(signedToken string) (*jwt.Token, error) {
 
 // ParseTokenFunc is a callback function used to parse
 // and validate JWT tokens within the context of the echo-jwt middleware
-func (eJWT EchoJWTUtil) ParseTokenFunc(c echo.Context, auth string) (interface{}, error) {
+func (eJWT EchoJWTUtil) ParseTokenFunc(c echo.Context, auth string) (any, error) {
 	token, err := eJWT.ParseToken(auth)
 	if err != nil {
 		return nil, err
