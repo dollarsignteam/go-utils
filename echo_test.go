@@ -59,7 +59,7 @@ func TestEchoBinderWithValidation_Bind(t *testing.T) {
 		},
 	}
 	e := echo.New()
-	binder := &utils.EchoBinderWithValidation{}
+	binder := utils.EchoBinder
 	for _, test := range tests {
 		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -72,6 +72,98 @@ func TestEchoBinderWithValidation_Bind(t *testing.T) {
 			assert.Equal(t, test.expected, err)
 		}
 	}
+}
+
+func TestEchoBinderWithValidation_BindBody(t *testing.T) {
+	type TestRequest struct {
+		Field1 string `json:"field1" validate:"required"`
+		Field2 int    `json:"field2" validate:"gte=0"`
+	}
+	tests := []struct {
+		body     string
+		expected error
+	}{
+		{
+			body:     `{"field1":"value1", "field2":1}`,
+			expected: nil,
+		},
+		{
+			body:     `[]`,
+			expected: errors.New("Unmarshal type error: expected=utils_test.TestRequest, got=array, field=, offset=1"),
+		},
+	}
+	e := echo.New()
+	binder := utils.EchoBinder
+	for _, test := range tests {
+		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		c := e.NewContext(req, httptest.NewRecorder())
+		testRequest := new(TestRequest)
+		err := binder.BindBody(c, testRequest)
+		if err != nil {
+			assert.EqualError(t, err, test.expected.Error())
+		} else {
+			assert.Equal(t, test.expected, err)
+		}
+	}
+}
+
+func TestEchoBinderWithValidation_BindHeaders(t *testing.T) {
+	type TestRequest struct {
+		Field1 string `header:"field1" validate:"required"`
+		Field2 int    `header:"field2" validate:"gte=0"`
+	}
+	tests := []struct {
+		name           string
+		headers        map[string]string
+		expectedResult interface{}
+		expectedError  error
+	}{
+		{
+			name: "Successful binding and validation",
+			headers: map[string]string{
+				"Field1": "hello",
+				"Field2": "3",
+			},
+			expectedResult: &TestRequest{
+				Field1: "hello",
+				Field2: 3,
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Missing required header field",
+			headers: map[string]string{
+				"Field2": "5",
+			},
+			expectedResult: nil,
+			expectedError:  errors.New("Validation failed for 'Field1'"),
+		},
+	}
+	e := echo.New()
+	binder := utils.EchoBinder
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := httptest.NewRequest(echo.GET, "/", nil)
+			for k, v := range test.headers {
+				req.Header.Add(k, v)
+			}
+			c := e.NewContext(req, httptest.NewRecorder())
+			testRequest := new(TestRequest)
+			err := binder.BindHeaders(c, testRequest)
+			if test.expectedError != nil {
+				assert.Error(t, err)
+				assert.Equal(t, test.expectedError.Error(), err.Error())
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, test.expectedResult, testRequest)
+			}
+		})
+	}
+	req := httptest.NewRequest(echo.GET, "/", nil)
+	c := e.NewContext(req, httptest.NewRecorder())
+	err := binder.BindHeaders(c, nil)
+	assert.EqualError(t, err, "")
 }
 
 func TestEchoValidator_Validate(t *testing.T) {
