@@ -116,24 +116,22 @@ func TestJWTAuth(t *testing.T) {
 	})
 	e.Use(echoJWT.JWTAuth())
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	res := httptest.NewRecorder()
+	rec := httptest.NewRecorder()
 	token := echoJWT.CreateToken(testClaims)
 	req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token.SignedString))
-	e.ServeHTTP(res, req)
-	assert.Equal(t, http.StatusOK, res.Code)
-	assert.Equal(t, testClaims.Subject, res.Body.String())
+	e.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, testClaims.Subject, rec.Body.String())
 }
 
 func BenchmarkJWTAuth(b *testing.B) {
 	e := echo.New()
 	echoJWT := utils.EchoJWT.New(testEchoJWTConfig)
 	e.Use(echoJWT.JWTAuth())
-
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	res := httptest.NewRecorder()
-
+	rec := httptest.NewRecorder()
 	for i := 0; i < b.N; i++ {
-		e.ServeHTTP(res, req)
+		e.ServeHTTP(rec, req)
 	}
 }
 

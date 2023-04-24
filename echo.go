@@ -75,11 +75,9 @@ func (b *EchoBinderWithValidation) BindPathParams(c echo.Context, i any) error {
 // BindQueryParams is a method that binds the query params to the given struct,
 // validates it using the ValidateStruct function,
 // and returns an error if binding or validation fails.
-func (b *EchoBinderWithValidation) BindQueryParams(c echo.Context, i any) (err error) {
-	if err := b.DefaultBinder.BindQueryParams(c, i); err != nil {
-		return errors.New(err.(*echo.HTTPError).Message.(string))
-	}
-	return ValidateStruct(i)
+func (b *EchoBinderWithValidation) BindQueryParams(c echo.Context, i any) error {
+	err := b.DefaultBinder.BindQueryParams(c, i)
+	return b.validateWithErrorHandling(i, err)
 }
 
 // DefaultRootHandler handles requests to the root endpoint

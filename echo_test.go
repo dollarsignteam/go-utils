@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -162,10 +161,10 @@ func TestEchoBinderWithValidation_BindHeaders(t *testing.T) {
 	}
 }
 
-func TestEchoBinderWithValidation_BindPathParams(t *testing.T) {
+func TestEchoBinderWithValidation_BindQueryParams(t *testing.T) {
 	type TestRequest struct {
-		Field1 string `param:"field1" validate:"required"`
-		Field2 int    `param:"field2" validate:"gte=0"`
+		Field1 string `query:"field1" validate:"required"`
+		Field2 int    `query:"field2" validate:"gte=0"`
 	}
 	tests := []struct {
 		path            string
@@ -180,36 +179,43 @@ func TestEchoBinderWithValidation_BindPathParams(t *testing.T) {
 			},
 			expectedError: nil,
 		},
-		// {
-		// 	path:            "/test?field2=1",
-		// 	expectedRequest: TestRequest{},
-		// 	expectedError:   fmt.Errorf("Validation failed for 'Field1'"),
-		// },
-		// {
-		// 	path:            "/test",
-		// 	expectedRequest: TestRequest{},
-		// 	expectedError:   fmt.Errorf("Validation failed for 'Field1'"),
-		// },
+		{
+			path:            "/test?field2=-1",
+			expectedRequest: TestRequest{},
+			expectedError:   errors.New("Validation failed for 'Field1', 'Field2'"),
+		},
 	}
 	e := echo.New()
 	binder := utils.EchoBinder
 	for _, test := range tests {
-		q := make(url.Values)
-		q.Set("field1", "value1")
-		q.Set("field2", "1")
-		req := httptest.NewRequest(http.MethodGet, "/test?"+q.Encode(), nil)
-
-		// req := httptest.NewRequest(http.MethodGet, test.path, nil)
+		req := httptest.NewRequest(http.MethodGet, test.path, nil)
 		c := e.NewContext(req, httptest.NewRecorder())
 		testRequest := new(TestRequest)
-		err := binder.BindPathParams(c, testRequest)
+		err := binder.BindQueryParams(c, testRequest)
 		if test.expectedError != nil {
 			assert.EqualError(t, err, test.expectedError.Error())
 		} else {
 			assert.Nil(t, err)
-			// assert.Equal(t, test.expectedRequest, testRequest)
+			assert.Equal(t, &test.expectedRequest, testRequest)
 		}
 	}
+}
+
+func TestEchoBinderWithValidation_BindPathParams(t *testing.T) {
+	type TestRequest struct {
+		ID int `param:"id" validate:"required"`
+	}
+	e := echo.New()
+	binder := utils.EchoBinder
+	req := httptest.NewRequest(http.MethodGet, "/users/123", nil)
+	c := e.NewContext(req, httptest.NewRecorder())
+	c.SetPath("/users/:id")
+	c.SetParamNames("id")
+	c.SetParamValues("123")
+	testRequest := new(TestRequest)
+	err := binder.BindPathParams(c, testRequest)
+	assert.Nil(t, err)
+	assert.Equal(t, 123, testRequest.ID)
 }
 
 func TestEchoValidator_Validate(t *testing.T) {
