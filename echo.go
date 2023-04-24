@@ -40,40 +40,35 @@ func (b *EchoBinderWithValidation) validateWithErrorHandling(i any, err error) e
 	return ValidateStruct(i)
 }
 
-// Bind is a method that binds the request data to the given struct,
-// validates it using the ValidateStruct function,
+// Bind binds request data, validates it using ValidateStruct(),
 // and returns an error if binding or validation fails.
 func (b *EchoBinderWithValidation) Bind(i any, c echo.Context) error {
 	err := b.DefaultBinder.Bind(i, c)
 	return b.validateWithErrorHandling(i, err)
 }
 
-// BindBody is a method that binds the body data to the given struct,
-// validates it using the ValidateStruct function,
+// BindBody binds body data, validates it using ValidateStruct(),
 // and returns an error if binding or validation fails.
 func (b *EchoBinderWithValidation) BindBody(c echo.Context, i any) error {
 	err := b.DefaultBinder.BindBody(c, i)
 	return b.validateWithErrorHandling(i, err)
 }
 
-// BindHeaders is a method that binds the headers data to the given struct,
-// validates it using the ValidateStruct function,
+// BindHeaders binds headers data, validates it using ValidateStruct(),
 // and returns an error if binding or validation fails.
 func (b *EchoBinderWithValidation) BindHeaders(c echo.Context, i any) error {
 	err := b.DefaultBinder.BindHeaders(c, i)
 	return b.validateWithErrorHandling(i, err)
 }
 
-// BindPathParams is a method that binds the path params to the given struct,
-// validates it using the ValidateStruct function,
+// BindPathParams binds path params, validates them using ValidateStruct(),
 // and returns an error if binding or validation fails.
 func (b *EchoBinderWithValidation) BindPathParams(c echo.Context, i any) error {
 	err := b.DefaultBinder.BindPathParams(c, i)
 	return b.validateWithErrorHandling(i, err)
 }
 
-// BindQueryParams is a method that binds the query params to the given struct,
-// validates it using the ValidateStruct function,
+// BindQueryParams binds query params, validates them using ValidateStruct(),
 // and returns an error if binding or validation fails.
 func (b *EchoBinderWithValidation) BindQueryParams(c echo.Context, i any) error {
 	err := b.DefaultBinder.BindQueryParams(c, i)
