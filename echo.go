@@ -32,44 +32,44 @@ type EchoBinderWithValidation struct {
 	echo.DefaultBinder
 }
 
+// validateWithErrorHandling validates a given struct and error handler
+func (b *EchoBinderWithValidation) validateWithErrorHandling(i any, err error) error {
+	if err != nil {
+		return errors.New(err.(*echo.HTTPError).Message.(string))
+	}
+	return ValidateStruct(i)
+}
+
 // Bind is a method that binds the request data to the given struct,
 // validates it using the ValidateStruct function,
 // and returns an error if binding or validation fails.
 func (b *EchoBinderWithValidation) Bind(i any, c echo.Context) error {
-	if err := b.DefaultBinder.Bind(i, c); err != nil {
-		return errors.New(err.(*echo.HTTPError).Message.(string))
-	}
-	return ValidateStruct(i)
+	err := b.DefaultBinder.Bind(i, c)
+	return b.validateWithErrorHandling(i, err)
 }
 
 // BindBody is a method that binds the body data to the given struct,
 // validates it using the ValidateStruct function,
 // and returns an error if binding or validation fails.
-func (b *EchoBinderWithValidation) BindBody(c echo.Context, i any) (err error) {
-	if err := b.DefaultBinder.BindBody(c, i); err != nil {
-		return errors.New(err.(*echo.HTTPError).Message.(string))
-	}
-	return ValidateStruct(i)
+func (b *EchoBinderWithValidation) BindBody(c echo.Context, i any) error {
+	err := b.DefaultBinder.BindBody(c, i)
+	return b.validateWithErrorHandling(i, err)
 }
 
 // BindHeaders is a method that binds the headers data to the given struct,
 // validates it using the ValidateStruct function,
 // and returns an error if binding or validation fails.
-func (b *EchoBinderWithValidation) BindHeaders(c echo.Context, i any) (err error) {
-	if err := b.DefaultBinder.BindHeaders(c, i); err != nil {
-		return errors.New(err.(*echo.HTTPError).Message.(string))
-	}
-	return ValidateStruct(i)
+func (b *EchoBinderWithValidation) BindHeaders(c echo.Context, i any) error {
+	err := b.DefaultBinder.BindHeaders(c, i)
+	return b.validateWithErrorHandling(i, err)
 }
 
 // BindPathParams is a method that binds the path params to the given struct,
 // validates it using the ValidateStruct function,
 // and returns an error if binding or validation fails.
-func (b *EchoBinderWithValidation) BindPathParams(c echo.Context, i any) (err error) {
-	if err := b.DefaultBinder.BindPathParams(c, i); err != nil {
-		return errors.New(err.(*echo.HTTPError).Message.(string))
-	}
-	return ValidateStruct(i)
+func (b *EchoBinderWithValidation) BindPathParams(c echo.Context, i any) error {
+	err := b.DefaultBinder.BindPathParams(c, i)
+	return b.validateWithErrorHandling(i, err)
 }
 
 // BindQueryParams is a method that binds the query params to the given struct,

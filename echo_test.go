@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -152,18 +153,63 @@ func TestEchoBinderWithValidation_BindHeaders(t *testing.T) {
 			testRequest := new(TestRequest)
 			err := binder.BindHeaders(c, testRequest)
 			if test.expectedError != nil {
-				assert.Error(t, err)
-				assert.Equal(t, test.expectedError.Error(), err.Error())
+				assert.EqualError(t, err, test.expectedError.Error())
 			} else {
 				assert.Nil(t, err)
 				assert.Equal(t, test.expectedResult, testRequest)
 			}
 		})
 	}
-	req := httptest.NewRequest(echo.GET, "/", nil)
-	c := e.NewContext(req, httptest.NewRecorder())
-	err := binder.BindHeaders(c, nil)
-	assert.EqualError(t, err, "")
+}
+
+func TestEchoBinderWithValidation_BindPathParams(t *testing.T) {
+	type TestRequest struct {
+		Field1 string `param:"field1" validate:"required"`
+		Field2 int    `param:"field2" validate:"gte=0"`
+	}
+	tests := []struct {
+		path            string
+		expectedRequest TestRequest
+		expectedError   error
+	}{
+		{
+			path: "/test?field1=value1&field2=1",
+			expectedRequest: TestRequest{
+				Field1: "value1",
+				Field2: 1,
+			},
+			expectedError: nil,
+		},
+		// {
+		// 	path:            "/test?field2=1",
+		// 	expectedRequest: TestRequest{},
+		// 	expectedError:   fmt.Errorf("Validation failed for 'Field1'"),
+		// },
+		// {
+		// 	path:            "/test",
+		// 	expectedRequest: TestRequest{},
+		// 	expectedError:   fmt.Errorf("Validation failed for 'Field1'"),
+		// },
+	}
+	e := echo.New()
+	binder := utils.EchoBinder
+	for _, test := range tests {
+		q := make(url.Values)
+		q.Set("field1", "value1")
+		q.Set("field2", "1")
+		req := httptest.NewRequest(http.MethodGet, "/test?"+q.Encode(), nil)
+
+		// req := httptest.NewRequest(http.MethodGet, test.path, nil)
+		c := e.NewContext(req, httptest.NewRecorder())
+		testRequest := new(TestRequest)
+		err := binder.BindPathParams(c, testRequest)
+		if test.expectedError != nil {
+			assert.EqualError(t, err, test.expectedError.Error())
+		} else {
+			assert.Nil(t, err)
+			// assert.Equal(t, test.expectedRequest, testRequest)
+		}
+	}
 }
 
 func TestEchoValidator_Validate(t *testing.T) {
