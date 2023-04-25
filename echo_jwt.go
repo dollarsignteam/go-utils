@@ -15,7 +15,7 @@ var EchoJWT EchoJWTUtil
 // EchoJWTUtil is a utility struct that provides methods
 // for working with JWT tokens in the context of the Echo web framework
 type EchoJWTUtil struct {
-	Config        EchoJWTConfig  // The configuration for EchoJWTUtil
+	Config        *EchoJWTConfig // The configuration for EchoJWTUtil
 	echoJWTConfig echojwt.Config // The configuration for the echojwt library
 }
 
@@ -33,7 +33,7 @@ type EchoJWTConfig struct {
 }
 
 // New creates and returns a new instance of EchoJWTUtil
-func (EchoJWTUtil) New(config EchoJWTConfig) *EchoJWTUtil {
+func (EchoJWTUtil) New(config *EchoJWTConfig) *EchoJWTUtil {
 	echoJWTUtil := &EchoJWTUtil{
 		Config: config,
 		echoJWTConfig: echojwt.Config{

@@ -15,7 +15,7 @@ import (
 	"github.com/dollarsignteam/go-utils"
 )
 
-var testEchoJWTConfig = utils.EchoJWTConfig{
+var testEchoJWTConfig = &utils.EchoJWTConfig{
 	SigningKey: "my-secret-key",
 	ExpiresTTL: time.Hour,
 }
@@ -90,7 +90,7 @@ func TestParseTokenFunc_InvalidToken(t *testing.T) {
 
 func TestParseTokenFunc_BeforeSuccessFunc_Error(t *testing.T) {
 	var beforeSuccessCalled bool
-	config := utils.EchoJWTConfig{
+	config := &utils.EchoJWTConfig{
 		SigningKey: testEchoJWTConfig.SigningKey,
 		BeforeSuccessFunc: func(token *jwt.Token, c echo.Context) error {
 			beforeSuccessCalled = true
