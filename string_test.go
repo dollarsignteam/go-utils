@@ -45,6 +45,21 @@ func TestSHA256(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
+func TestHashAndVerifyPassword(t *testing.T) {
+	password := "foo"
+	result, err := utils.String.HashPassword(password)
+	assert.Nil(t, err)
+	err = utils.String.VerifyPassword(result, password)
+	assert.Nil(t, err)
+}
+
+func TestHashPassword_Error(t *testing.T) {
+	password := make([]byte, 80)
+	result, err := utils.String.HashPassword(string(password))
+	assert.Empty(t, result)
+	assert.EqualError(t, err, "bcrypt: password length exceeds 72 bytes")
+}
+
 func BenchmarkRemoveDuplicateSpaces(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.String.RemoveDuplicateSpaces(TestSpacesString)
@@ -72,5 +87,11 @@ func BenchmarkSHA1(b *testing.B) {
 func BenchmarkSHA256(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.String.SHA256(TestSpacesString)
+	}
+}
+
+func BenchmarkHashPassword(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		utils.String.HashPassword(TestSpacesString)
 	}
 }

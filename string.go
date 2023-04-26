@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Constants representing various Unicode characters
@@ -69,4 +70,18 @@ func (StringUtil) SHA1(s string) string {
 func (StringUtil) SHA256(s string) string {
 	hash := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(hash[:])
+}
+
+// HashPassword takes a plaintext password and returns its bcrypt hash
+func (StringUtil) HashPassword(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
+}
+
+// VerifyPassword checks if the provided plain text password matches the existing bcrypt hash
+func (StringUtil) VerifyPassword(hashedPassword, password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
