@@ -230,7 +230,7 @@ func TestEchoValidator_Validate(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestNew(t *testing.T) {
+func TestEchoNew(t *testing.T) {
 	e := utils.Echo.New()
 	assert.IsType(t, &echo.Echo{}, e)
 	assert.True(t, e.HidePort)
