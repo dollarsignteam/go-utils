@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "alicebob",
     "bytebufferpool",
     "datetime",
     "davecgh",
@@ -13,6 +14,7 @@
     "labstack",
     "leodido",
     "mattn",
+    "miniredis",
     "pmezard",
     "Println",
     "valyala"
