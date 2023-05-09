@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
+	"github.com/alicebob/miniredis/v2/server"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/dollarsignteam/go-utils"
@@ -64,6 +65,40 @@ func TestSessionRedisHandler_Get(t *testing.T) {
 		MultipleSessionPerUser: true,
 		Client:                 client,
 	})
-	_, err := h.Get("sid", 1, "gid")
-	assert.ErrorIs(t, err, utils.ErrSessionNotFound)
+
+	session := utils.Session{
+		ID:      "foo",
+		UserID:  1,
+		GroupID: "bar",
+		Data:    nil,
+	}
+
+	t.Run("success", func(t *testing.T) {
+		err := h.Set(session, time.Now().Add(1*time.Second).Unix())
+		assert.Nil(t, err)
+		result, _ := h.Get("foo", 1, "bar")
+		assert.Equal(t, session, result)
+	})
+
+	t.Run("invalid session", func(t *testing.T) {
+		_ = h.Set(session, time.Now().Add(1*time.Second).Unix())
+		_ = client.SetStruct("s:u:bar:1:foo", utils.Session{}, 1*time.Second)
+		_, err := h.Get("foo", 1, "bar")
+		assert.ErrorIs(t, err, utils.ErrSessionInvalid)
+	})
+
+	t.Run("session not found", func(t *testing.T) {
+		_, err := h.Get("sid", 1, "gid")
+		assert.ErrorIs(t, err, utils.ErrSessionNotFound)
+	})
+
+	t.Run("redis error", func(t *testing.T) {
+		s.Server().SetPreHook(func(p *server.Peer, s1 string, s2 ...string) bool {
+			p.WriteError("mock error")
+			return true
+		})
+		_, err := h.Get("sid", 1, "gid")
+		assert.EqualError(t, err, "mock error")
+	})
+
 }
