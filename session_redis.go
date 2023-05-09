@@ -252,7 +252,7 @@ func (h *SessionRedisHandler) find(key string, verifyFunc func(*Session) bool) (
 			}
 			var session Session
 			err = json.Unmarshal([]byte(res), &session)
-			if err != nil || verifyFunc(&session) {
+			if err != nil || !verifyFunc(&session) {
 				continue
 			}
 			sessions = append(sessions, session)

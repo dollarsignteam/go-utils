@@ -100,5 +100,22 @@ func TestSessionRedisHandler_Get(t *testing.T) {
 		_, err := h.Get("sid", 1, "gid")
 		assert.EqualError(t, err, "mock error")
 	})
+}
 
+func TestSessionRedisHandler_ListByUserID(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := utils.Redis.NewSessionHandler(utils.SessionRedisConfig{
+		MultipleSessionPerUser: false,
+		Client:                 client,
+	})
+	session := utils.Session{
+		ID:      "foo",
+		UserID:  1,
+		GroupID: "bar",
+	}
+	_ = h.Set(session, time.Now().Add(1*time.Second).Unix())
+	expected := []utils.Session{session}
+	result, _ := h.ListByUserID(1)
+	assert.Equal(t, expected, result)
 }
