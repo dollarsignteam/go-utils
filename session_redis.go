@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -12,7 +11,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// Default redis session constants
 const (
 	DefaultRedisSessionKey = "session"
 	DefaultRedisUserKey    = "user"
@@ -28,53 +26,59 @@ var (
 	ErrSessionInvalid  = errors.New("invalid session")
 )
 
-// SessionRedisConfig represents the configuration used to setup a Redis session manager.
 type SessionRedisConfig struct {
-	SessionKey             string       // The key used to store session data in Redis
-	UserKey                string       // The key used to identify the user associated with a given session
-	MultipleSessionPerUser bool         // Indicates whether multiple sessions are allowed per user
-	Client                 *RedisClient // The Redis client used to communicate with the Redis server
+	SessionKey             string
+	UserKey                string
+	MultipleSessionPerUser bool
+	Client                 *RedisClient
 }
 
-// SessionRedisGetKeyParam represents parameters used to generate Redis keys for session storage.
-type SessionRedisGetKeyParam struct {
-	SessionID string
-	UserID    string
-	GroupID   string
-}
-
-// Session represents a single session stored in Redis.
-type Session struct {
+type SessionMeta struct {
 	ID      string `json:"sid"`
 	UserID  int64  `json:"uid"`
 	GroupID string `json:"gid,omitempty"`
-	Data    any    `json:"data,omitempty"`
+}
+
+func (meta SessionMeta) param() sessionKeyParam {
+	return sessionKeyParam{
+		ID:      meta.ID,
+		userID:  strconv.FormatInt(meta.UserID, 10),
+		groupID: meta.GroupID,
+	}
+}
+
+type Session struct {
+	Meta SessionMeta `json:"meta"`
+	Data any         `json:"data,omitempty"`
+}
+
+type sessionKeyParam struct {
+	ID      string
+	userID  string
+	groupID string
 }
 
 type SessionHandler interface {
 	Set(session Session, expiresAt int64) error
-	Get(sessionId string, userId int64, groupId string) (Session, error)
+	Get(meta SessionMeta) (Session, error)
 	ListByUserID(userId int64) ([]Session, error)
 	ListByGroupID(groupId string) ([]Session, error)
-	Exists(sessionId string, userId int64, groupId string) (bool, error)
+	Exists(meta SessionMeta) (bool, error)
 	Count(uniqueByUser bool) (int, error)
 	CountByUserID(userId int64, uniqueByUser bool) (int, error)
 	CountByGroupID(groupId string, uniqueByUser bool) (int, error)
-	Delete(sessionId string, userId int64, groupId string) error
+	Delete(meta SessionMeta) error
 	DeleteByUserID(userId int64) error
 	DeleteByGroupID(groupId string) error
 	DeleteAll() error
 }
 
-// SessionRedisHandler represents a handler for Redis sessions.
 type SessionRedisHandler struct {
 	multipleSessionPerUser bool
 	prefixKey              string
 	client                 *RedisClient
 }
 
-// NewSessionHandler returns a new Redis session handler
-// instance based on the provided configuration.
 func (RedisUtil) NewSessionHandler(config SessionRedisConfig) SessionHandler {
 	config.SessionKey = strings.TrimSpace(config.SessionKey)
 	config.UserKey = strings.TrimSpace(config.UserKey)
@@ -84,31 +88,25 @@ func (RedisUtil) NewSessionHandler(config SessionRedisConfig) SessionHandler {
 	if config.UserKey == "" {
 		config.UserKey = DefaultRedisUserKey
 	}
+	var builder strings.Builder
+	builder.WriteString(config.SessionKey)
+	builder.WriteByte(':')
+	builder.WriteString(config.UserKey)
 	return &SessionRedisHandler{
 		multipleSessionPerUser: config.MultipleSessionPerUser,
-		prefixKey:              fmt.Sprintf("%s:%s", config.SessionKey, config.UserKey),
+		prefixKey:              builder.String(),
 		client:                 config.Client,
 	}
 }
 
-// Set stores the provided session in Redis.
 func (h *SessionRedisHandler) Set(s Session, expiresAt int64) error {
-	key := h.getKey(SessionRedisGetKeyParam{
-		SessionID: s.ID,
-		UserID:    strconv.FormatInt(s.UserID, 10),
-		GroupID:   s.GroupID,
-	})
+	key := h.getKey(s.Meta.param())
 	ttl := time.Duration(Max(1, expiresAt-time.Now().Unix())) * time.Second
 	return h.client.SetStruct(key, s, time.Duration(ttl)*time.Second)
 }
 
-// Get retrieves the session with the specified ID for the given user and group.
-func (h *SessionRedisHandler) Get(sessionId string, userId int64, groupId string) (Session, error) {
-	key := h.getKey(SessionRedisGetKeyParam{
-		SessionID: sessionId,
-		UserID:    strconv.FormatInt(userId, 10),
-		GroupID:   groupId,
-	})
+func (h *SessionRedisHandler) Get(meta SessionMeta) (Session, error) {
+	key := h.getKey(meta.param())
 	session := Session{}
 	if err := h.client.GetStruct(key, &session); err != nil {
 		if err == redis.Nil {
@@ -116,119 +114,100 @@ func (h *SessionRedisHandler) Get(sessionId string, userId int64, groupId string
 		}
 		return session, err
 	}
-	if session.UserID != userId || session.ID != sessionId {
+	if session.Meta.ID != meta.ID || session.Meta.UserID != meta.UserID {
 		return session, ErrSessionInvalid
 	}
 	return session, nil
 }
 
-// ListByUserID retrieves all sessions for the given user.
 func (h *SessionRedisHandler) ListByUserID(userId int64) ([]Session, error) {
-	key := h.getKey(SessionRedisGetKeyParam{
-		SessionID: "*",
-		UserID:    strconv.FormatInt(userId, 10),
-		GroupID:   "*",
-	})
-	return h.find(key, func(s *Session) bool {
-		return s.UserID == userId
+	return h.find(h.keyByUserID(userId), func(session *Session) bool {
+		return session.Meta.UserID == userId
 	})
 }
 
-// ListByGroupID retrieves all sessions for the given group.
 func (h *SessionRedisHandler) ListByGroupID(groupId string) ([]Session, error) {
 	if groupId == "*" {
 		return []Session{}, nil
 	}
-	key := h.getKey(SessionRedisGetKeyParam{
-		SessionID: "*",
-		UserID:    "*",
-		GroupID:   groupId,
-	})
-	return h.find(key, func(s *Session) bool {
-		return s.GroupID == groupId
+	return h.find(h.keyByGroupID(groupId), func(session *Session) bool {
+		return session.Meta.GroupID == groupId
 	})
 }
 
-// Exists checks if the session with the specified ID for the given user and group exists.
-func (h *SessionRedisHandler) Exists(sessionId string, userId int64, groupId string) (bool, error) {
-	key := h.getKey(SessionRedisGetKeyParam{
-		SessionID: sessionId,
-		UserID:    strconv.FormatInt(userId, 10),
-		GroupID:   groupId,
-	})
+func (h *SessionRedisHandler) Exists(meta SessionMeta) (bool, error) {
+	key := h.getKey(meta.param())
 	res, err := h.client.Exists(context.TODO(), key).Result()
 	return res != 0, err
 }
 
-// Count returns the number of stored sessions.
 func (h *SessionRedisHandler) Count(uniqueByUser bool) (int, error) {
-	key := fmt.Sprintf("%s:*", h.prefixKey)
-	return h.countByKey(key, uniqueByUser)
+	return h.countByKey(h.keyAll(), uniqueByUser)
 }
 
-// CountByUserID returns the number of sessions associated with the given user.
 func (h *SessionRedisHandler) CountByUserID(userId int64, uniqueByUser bool) (int, error) {
-	key := fmt.Sprintf("%s:*:%d:*", h.prefixKey, userId)
-	if !h.multipleSessionPerUser {
-		key = fmt.Sprintf("%s:*:%d", h.prefixKey, userId)
-	}
-	return h.countByKey(key, uniqueByUser)
+	return h.countByKey(h.keyByUserID(userId), uniqueByUser)
 }
 
-// CountByGroupID returns the number of sessions associated with the given group.
 func (h *SessionRedisHandler) CountByGroupID(groupId string, uniqueByUser bool) (int, error) {
-	key := fmt.Sprintf("%s:%s:*", h.prefixKey, groupId)
-	return h.countByKey(key, uniqueByUser)
+	return h.countByKey(h.keyByGroupID(groupId), uniqueByUser)
 }
 
-// Delete removes the session with the specified ID for the given user and group from Redis.
-func (h *SessionRedisHandler) Delete(sessionId string, userId int64, groupId string) error {
-	key := h.getKey(SessionRedisGetKeyParam{
-		SessionID: sessionId,
-		UserID:    strconv.FormatInt(userId, 10),
-		GroupID:   groupId,
-	})
+func (h *SessionRedisHandler) Delete(meta SessionMeta) error {
+	key := h.getKey(meta.param())
 	return h.client.Del(context.TODO(), key).Err()
 }
 
-// DeleteByUserID removes all sessions associated with the given user from Redis.
 func (h *SessionRedisHandler) DeleteByUserID(userId int64) error {
-	key := fmt.Sprintf("%s:*:%d:*", h.prefixKey, userId)
-	if !h.multipleSessionPerUser {
-		key = fmt.Sprintf("%s:*:%d", h.prefixKey, userId)
-	}
-	return h.deleteSessionKeys(key)
+	return h.deleteSessionKeys(h.keyByUserID(userId))
 }
 
-// DeleteByGroupID removes all sessions associated with the given group from Redis.
 func (h *SessionRedisHandler) DeleteByGroupID(groupId string) error {
-	key := fmt.Sprintf("%s:%s:*", h.prefixKey, groupId)
-	return h.deleteSessionKeys(key)
+	return h.deleteSessionKeys(h.keyByGroupID(groupId))
 }
 
-// DeleteAll removes all sessions from Redis.
 func (h *SessionRedisHandler) DeleteAll() error {
-	key := fmt.Sprintf("%s:*", h.prefixKey)
-	return h.deleteSessionKeys(key)
+	return h.deleteSessionKeys(h.keyAll())
 }
 
-// getKey returns the Redis key for the given session.
-func (h *SessionRedisHandler) getKey(param SessionRedisGetKeyParam) string {
+func (h *SessionRedisHandler) keyAll() string {
+	return h.getKey(sessionKeyParam{
+		ID:      "*",
+		userID:  "*",
+		groupID: "*",
+	})
+}
+
+func (h *SessionRedisHandler) keyByUserID(userId int64) string {
+	return h.getKey(sessionKeyParam{
+		ID:      "*",
+		userID:  strconv.FormatInt(userId, 10),
+		groupID: "*",
+	})
+}
+
+func (h *SessionRedisHandler) keyByGroupID(groupId string) string {
+	return h.getKey(sessionKeyParam{
+		ID:      "*",
+		userID:  "*",
+		groupID: groupId,
+	})
+}
+
+func (h *SessionRedisHandler) getKey(param sessionKeyParam) string {
 	var builder strings.Builder
 	builder.WriteString(h.prefixKey)
 	builder.WriteByte(':')
-	builder.WriteString(param.GroupID)
+	builder.WriteString(param.groupID)
 	builder.WriteByte(':')
-	builder.WriteString(param.UserID)
+	builder.WriteString(param.userID)
 	if h.multipleSessionPerUser {
 		builder.WriteByte(':')
-		builder.WriteString(param.SessionID)
+		builder.WriteString(param.ID)
 	}
 	return builder.String()
 }
 
-// find searches Redis for all keys matching a given pattern and returns a slice of all sessions
-// that pass a verification function. Uses the SCAN command and Redis pipelines.
 func (h *SessionRedisHandler) find(key string, verifyFunc func(*Session) bool) ([]Session, error) {
 	var cursor uint64
 	ctx := context.TODO()
@@ -270,9 +249,6 @@ func (h *SessionRedisHandler) find(key string, verifyFunc func(*Session) bool) (
 	return sessions, nil
 }
 
-// countByKey counts the number of session keys based on the given 'key'.
-// If 'uniqueByUser' is set to true, it only counts unique sessions by user.
-// It returns the total count or the unique count and any potential errors.
 func (h *SessionRedisHandler) countByKey(key string, uniqueByUser bool) (int, error) {
 	var count int
 	if uniqueByUser {
@@ -291,7 +267,6 @@ func (h *SessionRedisHandler) countByKey(key string, uniqueByUser bool) (int, er
 	return count, err
 }
 
-// scans Redis session keys using SCAN command and processes them one by one.
 func (h *SessionRedisHandler) scanSessionKeys(key string, processKeyFunc func(string)) error {
 	var cursor uint64
 	ctx := context.TODO()
@@ -312,8 +287,6 @@ func (h *SessionRedisHandler) scanSessionKeys(key string, processKeyFunc func(st
 	return nil
 }
 
-// deleteSessionKeys scans and deletes Redis session keys
-// using the SCAN command and Redis transactions.
 func (h *SessionRedisHandler) deleteSessionKeys(key string) error {
 	ctx := context.TODO()
 	for {
