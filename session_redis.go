@@ -58,6 +58,13 @@ type Session struct {
 	Data any         `json:"data,omitempty"` // Optional data associated with the session.
 }
 
+// Scan reads session data and decodes it into a Go value pointed
+// to by dest using JSON parsing and validation.
+func (session Session) Scan(dest any) error {
+	b, _ := json.Marshal(session.Data)
+	return JSON.ParseAndValidate(string(b), dest)
+}
+
 // sessionKeyParam represents a parameter used to uniquely identify a session.
 type sessionKeyParam struct {
 	ID      string // ID of the session.
