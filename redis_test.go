@@ -13,11 +13,16 @@ import (
 	"github.com/dollarsignteam/go-utils"
 )
 
-func TestRedisNew(t *testing.T) {
+func createMockRedisServer(t *testing.T) (*miniredis.Miniredis, string) {
 	s, err := miniredis.Run()
 	if err != nil {
 		t.Fatal(err)
 	}
+	return s, fmt.Sprintf("redis://%s", s.Addr())
+}
+
+func TestRedisNew(t *testing.T) {
+	s, url := createMockRedisServer(t)
 	defer s.Close()
 	tests := []struct {
 		name          string
@@ -34,7 +39,7 @@ func TestRedisNew(t *testing.T) {
 		{
 			name: "success",
 			config: utils.RedisConfig{
-				URL: fmt.Sprintf("redis://%s", s.Addr()),
+				URL: url,
 			},
 			expectedError: nil,
 		},
@@ -57,7 +62,7 @@ func TestRedisNew(t *testing.T) {
 			return true
 		})
 		_, err := utils.Redis.New(utils.RedisConfig{
-			URL: fmt.Sprintf("redis://%s", s.Addr()),
+			URL: url,
 		})
 		assert.EqualError(t, err, "mock error")
 	})
@@ -69,13 +74,10 @@ type testRedisStruct struct {
 }
 
 func TestSetAndGetStruct(t *testing.T) {
-	s, err := miniredis.Run()
-	if err != nil {
-		t.Fatal(err)
-	}
+	s, url := createMockRedisServer(t)
 	defer s.Close()
 	client, err := utils.Redis.New(utils.RedisConfig{
-		URL: fmt.Sprintf("redis://%s", s.Addr()),
+		URL: url,
 	})
 	if err != nil {
 		t.Fatalf("error creating Redis client: %v", err)
@@ -111,13 +113,10 @@ func TestSetAndGetStruct(t *testing.T) {
 }
 
 func TestSetNXStruct(t *testing.T) {
-	s, err := miniredis.Run()
-	if err != nil {
-		t.Fatal(err)
-	}
+	s, url := createMockRedisServer(t)
 	defer s.Close()
 	client, err := utils.Redis.New(utils.RedisConfig{
-		URL: fmt.Sprintf("redis://%s", s.Addr()),
+		URL: url,
 	})
 	if err != nil {
 		t.Fatalf("error creating Redis client: %v", err)
@@ -141,13 +140,10 @@ func TestSetNXStruct(t *testing.T) {
 }
 
 func TestJSONSetAndGet(t *testing.T) {
-	s, err := miniredis.Run()
-	if err != nil {
-		t.Fatal(err)
-	}
+	s, url := createMockRedisServer(t)
 	defer s.Close()
 	client, err := utils.Redis.New(utils.RedisConfig{
-		URL: fmt.Sprintf("redis://%s", s.Addr()),
+		URL: url,
 	})
 	if err != nil {
 		t.Fatalf("error creating Redis client: %v", err)
