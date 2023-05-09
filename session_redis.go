@@ -169,7 +169,7 @@ func (h *SessionRedisHandler) Count(uniqueByUser bool) (int, error) {
 // CountByUserID returns the number of sessions associated with the given user.
 func (h *SessionRedisHandler) CountByUserID(userId int64, uniqueByUser bool) (int, error) {
 	key := fmt.Sprintf("%s:*:%d:*", h.prefixKey, userId)
-	if !h.multipleSessionPerUser || uniqueByUser {
+	if !h.multipleSessionPerUser {
 		key = fmt.Sprintf("%s:*:%d", h.prefixKey, userId)
 	}
 	return h.countByKey(key, uniqueByUser)
