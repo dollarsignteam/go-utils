@@ -285,6 +285,278 @@ func TestSessionRedisHandler_ListByUserID(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
+func TestSessionRedisHandler_ListByGroupID(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := Redis.NewSessionHandler(SessionRedisConfig{
+		MultipleSessionPerUser: false,
+		Client:                 client,
+	})
+	session := Session{
+		Meta: SessionMeta{
+			ID:      "foo",
+			UserID:  1,
+			GroupID: "bar",
+		},
+		Data: nil,
+	}
+	_ = h.Set(session, time.Now().Add(1*time.Second).Unix())
+
+	t.Run("group == *", func(t *testing.T) {
+		expected := []Session{}
+		result, _ := h.ListByGroupID("*")
+		assert.Equal(t, expected, result)
+	})
+
+	t.Run("list group", func(t *testing.T) {
+		expected := []Session{session}
+		result, _ := h.ListByGroupID("bar")
+		assert.Equal(t, expected, result)
+	})
+}
+
+func TestSessionRedisHandler_Exists(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := Redis.NewSessionHandler(SessionRedisConfig{
+		MultipleSessionPerUser: false,
+		Client:                 client,
+	})
+	meta := SessionMeta{
+		ID:      "foo",
+		UserID:  1,
+		GroupID: "bar",
+	}
+	session := Session{
+		Meta: meta,
+		Data: nil,
+	}
+	_ = h.Set(session, time.Now().Add(1*time.Second).Unix())
+	result, _ := h.Exists(meta)
+	assert.True(t, result)
+}
+
+func TestSessionRedisHandler_Count(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := Redis.NewSessionHandler(SessionRedisConfig{
+		MultipleSessionPerUser: true,
+		Client:                 client,
+	})
+	session1 := Session{
+		Meta: SessionMeta{
+			ID:      "foo1",
+			UserID:  1,
+			GroupID: "bar",
+		},
+		Data: nil,
+	}
+	session2 := Session{
+		Meta: SessionMeta{
+			ID:      "foo2",
+			UserID:  1,
+			GroupID: "bar",
+		},
+		Data: nil,
+	}
+	_ = h.Set(session1, time.Now().Add(1*time.Second).Unix())
+	_ = h.Set(session2, time.Now().Add(1*time.Second).Unix())
+
+	t.Run("unique by user", func(t *testing.T) {
+		expected := 1
+		result, _ := h.Count(true)
+		assert.Equal(t, expected, result)
+	})
+
+	t.Run("not unique by user", func(t *testing.T) {
+		expected := 2
+		result, _ := h.Count(false)
+		assert.Equal(t, expected, result)
+	})
+}
+
+func TestSessionRedisHandler_CountByUserID(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := Redis.NewSessionHandler(SessionRedisConfig{
+		MultipleSessionPerUser: false,
+		Client:                 client,
+	})
+	session1 := Session{
+		Meta: SessionMeta{
+			ID:      "foo1",
+			UserID:  1,
+			GroupID: "bar",
+		},
+		Data: nil,
+	}
+	session2 := Session{
+		Meta: SessionMeta{
+			ID:      "foo2",
+			UserID:  1,
+			GroupID: "bar",
+		},
+		Data: nil,
+	}
+	_ = h.Set(session1, time.Now().Add(1*time.Second).Unix())
+	_ = h.Set(session2, time.Now().Add(1*time.Second).Unix())
+
+	t.Run("unique by user", func(t *testing.T) {
+		expected := 1
+		result, _ := h.CountByUserID(1, true)
+		assert.Equal(t, expected, result)
+	})
+
+	t.Run("not unique by user", func(t *testing.T) {
+		expected := 1
+		result, _ := h.CountByUserID(1, false)
+		assert.Equal(t, expected, result)
+	})
+}
+
+func TestSessionRedisHandler_CountByGroupID(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := Redis.NewSessionHandler(SessionRedisConfig{
+		MultipleSessionPerUser: true,
+		Client:                 client,
+	})
+	session := Session{
+		Meta: SessionMeta{
+			ID:      "foo",
+			UserID:  1,
+			GroupID: "bar",
+		},
+		Data: nil,
+	}
+	_ = h.Set(session, time.Now().Add(1*time.Second).Unix())
+
+	t.Run("unique by user", func(t *testing.T) {
+		expected := 0
+		result, _ := h.CountByGroupID("foo", true)
+		assert.Equal(t, expected, result)
+	})
+
+	t.Run("not unique by user", func(t *testing.T) {
+		expected := 1
+		result, _ := h.CountByGroupID("bar", false)
+		assert.Equal(t, expected, result)
+	})
+}
+
+func TestSessionRedisHandler_Delete(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := Redis.NewSessionHandler(SessionRedisConfig{
+		MultipleSessionPerUser: false,
+		Client:                 client,
+	})
+	meta := SessionMeta{
+		ID:      "foo",
+		UserID:  1,
+		GroupID: "bar",
+	}
+	session := Session{
+		Meta: meta,
+		Data: nil,
+	}
+	_ = h.Set(session, time.Now().Add(1*time.Second).Unix())
+	_ = h.Delete(meta)
+	_, err := h.Get(meta)
+	assert.ErrorIs(t, err, ErrSessionNotFound)
+}
+
+func TestSessionRedisHandler_DeleteByUserID(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := Redis.NewSessionHandler(SessionRedisConfig{
+		MultipleSessionPerUser: true,
+		Client:                 client,
+	})
+	meta := SessionMeta{
+		ID:      "foo",
+		UserID:  1,
+		GroupID: "bar",
+	}
+	session := Session{
+		Meta: meta,
+		Data: nil,
+	}
+	_ = h.Set(session, time.Now().Add(1*time.Second).Unix())
+	_ = h.DeleteByUserID(1)
+	_, err := h.Get(meta)
+	assert.ErrorIs(t, err, ErrSessionNotFound)
+}
+
+func TestSessionRedisHandler_DeleteByGroupID(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := Redis.NewSessionHandler(SessionRedisConfig{
+		MultipleSessionPerUser: true,
+		Client:                 client,
+	})
+	meta := SessionMeta{
+		ID:      "foo",
+		UserID:  1,
+		GroupID: "bar",
+	}
+	session := Session{
+		Meta: meta,
+		Data: nil,
+	}
+	_ = h.Set(session, time.Now().Add(1*time.Second).Unix())
+	_ = h.DeleteByGroupID("bar")
+	_, err := h.Get(meta)
+	assert.ErrorIs(t, err, ErrSessionNotFound)
+}
+
+func TestSessionRedisHandler_DeleteAll(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := Redis.NewSessionHandler(SessionRedisConfig{
+		MultipleSessionPerUser: true,
+		Client:                 client,
+	})
+	meta := SessionMeta{
+		ID:      "foo",
+		UserID:  1,
+		GroupID: "bar",
+	}
+	session := Session{
+		Meta: meta,
+		Data: nil,
+	}
+	_ = h.Set(session, time.Now().Add(1*time.Second).Unix())
+	_ = h.DeleteAll()
+	count, _ := h.Count(false)
+	assert.Equal(t, 0, count)
+}
+
+func TestSessionRedisHandler_scanSessionKeys(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := SessionRedisHandler{
+		multipleSessionPerUser: false,
+		client:                 client,
+	}
+
+	t.Run("success", func(t *testing.T) {
+		_ = s.Set("foo:bar", "baz")
+		_ = h.scanSessionKeys("foo:*", func(s string) {
+			assert.Equal(t, "foo:bar", s)
+		})
+	})
+
+	t.Run("error", func(t *testing.T) {
+		s.Server().SetPreHook(func(p *server.Peer, s1 string, s2 ...string) bool {
+			p.WriteError("mock error")
+			return true
+		})
+		err := h.scanSessionKeys("foo:*", func(s string) {})
+		assert.EqualError(t, err, "mock error")
+	})
+}
+
 func BenchmarkSession_Scan(b *testing.B) {
 	session := Session{
 		Meta: SessionMeta{},
