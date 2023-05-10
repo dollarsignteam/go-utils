@@ -532,13 +532,109 @@ func TestSessionRedisHandler_DeleteAll(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
+func TestSessionRedisHandler_find(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		s, client := createMockRedisClient(t)
+		defer s.Close()
+		h := SessionRedisHandler{
+			prefixKey: "session:user",
+			client:    client,
+		}
+		session1 := Session{
+			Meta: SessionMeta{
+				ID:      "foo1",
+				UserID:  1,
+				GroupID: "bar",
+			},
+			Data: nil,
+		}
+		session2 := Session{
+			Meta: SessionMeta{
+				ID:      "foo2",
+				UserID:  2,
+				GroupID: "bar",
+			},
+			Data: nil,
+		}
+		_ = h.Set(session1, time.Now().Add(1*time.Second).Unix())
+		_ = h.Set(session2, time.Now().Add(1*time.Second).Unix())
+		result, _ := h.find("session:*", func(s *Session) bool {
+			return s.Meta.UserID == 1
+		})
+		assert.Equal(t, session1, result[0])
+	})
+
+	t.Run("error", func(t *testing.T) {
+		s, client := createMockRedisClient(t)
+		defer s.Close()
+		h := SessionRedisHandler{client: client}
+		s.Server().SetPreHook(func(p *server.Peer, s1 string, s2 ...string) bool {
+			p.WriteError("mock error")
+			return true
+		})
+		_, err := h.find("foo:*", func(s *Session) bool {
+			return true
+		})
+		assert.EqualError(t, err, "mock error")
+	})
+
+	t.Run("pipe error", func(t *testing.T) {
+		s, client := createMockRedisClient(t)
+		defer s.Close()
+		h := SessionRedisHandler{
+			prefixKey: "session:user",
+			client:    client,
+		}
+		s.Server().SetPreHook(func(p *server.Peer, s1 string, s2 ...string) bool {
+			if s1 == "SCAN" {
+				p.WriteLen(2)
+				p.WriteBulk("0")
+				p.WriteLen(1)
+				p.WriteBulk("foo:bar")
+				return true
+			}
+			p.WriteError("pipe error")
+			return true
+		})
+		_, err := h.find("foo:*", func(s *Session) bool {
+			return true
+		})
+		assert.EqualError(t, err, "pipe error")
+	})
+
+	t.Run("get error", func(t *testing.T) {
+		s, client := createMockRedisClient(t)
+		defer s.Close()
+		h := SessionRedisHandler{
+			prefixKey: "session:user",
+			client:    client,
+		}
+		s.Server().SetPreHook(func(p *server.Peer, s1 string, s2 ...string) bool {
+			if s1 == "SCAN" {
+				p.WriteLen(2)
+				p.WriteBulk("0")
+				p.WriteLen(1)
+				p.WriteBulk("foo:bar")
+				return true
+			}
+			if s1 == "MULTI" {
+				p.WriteError(s1)
+				return true
+			}
+			p.WriteNull()
+			return true
+		})
+		_, err := h.find("session:*", func(s *Session) bool {
+			return true
+		})
+		assert.EqualError(t, err, "get error")
+	})
+}
+
 func TestSessionRedisHandler_scanSessionKeys(t *testing.T) {
 	s, client := createMockRedisClient(t)
 	defer s.Close()
-	h := SessionRedisHandler{
-		multipleSessionPerUser: false,
-		client:                 client,
-	}
+	h := SessionRedisHandler{client: client}
 
 	t.Run("success", func(t *testing.T) {
 		_ = s.Set("foo:bar", "baz")
@@ -554,6 +650,47 @@ func TestSessionRedisHandler_scanSessionKeys(t *testing.T) {
 		})
 		err := h.scanSessionKeys("foo:*", func(s string) {})
 		assert.EqualError(t, err, "mock error")
+	})
+}
+
+func TestSessionRedisHandler_deleteSessionKeys(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := SessionRedisHandler{client: client}
+
+	t.Run("success", func(t *testing.T) {
+		_ = s.Set("foo:bar", "baz")
+		_ = h.deleteSessionKeys("foo:*")
+		result := s.Exists("foo:bar")
+		assert.False(t, result)
+	})
+
+	t.Run("error", func(t *testing.T) {
+		s.Server().SetPreHook(func(p *server.Peer, s1 string, s2 ...string) bool {
+			p.WriteError("mock error")
+			return true
+		})
+		err := h.deleteSessionKeys("foo:*")
+		assert.EqualError(t, err, "mock error")
+	})
+
+	t.Run("pipe error", func(t *testing.T) {
+		s, client := createMockRedisClient(t)
+		defer s.Close()
+		h := SessionRedisHandler{client: client}
+		s.Server().SetPreHook(func(p *server.Peer, s1 string, s2 ...string) bool {
+			if s1 == "SCAN" {
+				p.WriteLen(2)
+				p.WriteBulk("0")
+				p.WriteLen(1)
+				p.WriteBulk("foo:bar")
+				return true
+			}
+			p.WriteError("pipe error")
+			return true
+		})
+		err := h.deleteSessionKeys("foo:*")
+		assert.EqualError(t, err, "pipe error")
 	})
 }
 
