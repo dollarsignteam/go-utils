@@ -18,6 +18,7 @@
     "miniredis",
     "pmezard",
     "Println",
+    "sess",
     "valyala"
   ]
 }

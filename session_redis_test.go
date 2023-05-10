@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -87,6 +88,82 @@ func TestSessionMeta_param(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result := test.meta.param()
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestRedis_NewSessionHandler(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   SessionRedisConfig
+		expected SessionHandler
+	}{
+		{
+			name: "empty config",
+			config: SessionRedisConfig{
+				Client: &RedisClient{},
+			},
+			expected: &SessionRedisHandler{
+				multipleSessionPerUser: false,
+				prefixKey:              fmt.Sprintf("%s:%s", DefaultRedisSessionKey, DefaultRedisUserKey),
+				client:                 &RedisClient{},
+			},
+		},
+		{
+			name: "session key only",
+			config: SessionRedisConfig{
+				SessionKey: "sess",
+				Client:     &RedisClient{},
+			},
+			expected: &SessionRedisHandler{
+				multipleSessionPerUser: false,
+				prefixKey:              fmt.Sprintf("sess:%s", DefaultRedisUserKey),
+				client:                 &RedisClient{},
+			},
+		},
+		{
+			name: "user key only",
+			config: SessionRedisConfig{
+				UserKey: "use",
+				Client:  &RedisClient{},
+			},
+			expected: &SessionRedisHandler{
+				multipleSessionPerUser: false,
+				prefixKey:              fmt.Sprintf("%s:use", DefaultRedisSessionKey),
+				client:                 &RedisClient{},
+			},
+		},
+		{
+			name: "multiple sessions per user",
+			config: SessionRedisConfig{
+				Client:                 &RedisClient{},
+				MultipleSessionPerUser: true,
+			},
+			expected: &SessionRedisHandler{
+				multipleSessionPerUser: true,
+				prefixKey:              fmt.Sprintf("%s:%s", DefaultRedisSessionKey, DefaultRedisUserKey),
+				client:                 &RedisClient{},
+			},
+		},
+		{
+			name: "custom keys",
+			config: SessionRedisConfig{
+				SessionKey:             "sess",
+				UserKey:                "use",
+				Client:                 &RedisClient{},
+				MultipleSessionPerUser: true,
+			},
+			expected: &SessionRedisHandler{
+				multipleSessionPerUser: true,
+				prefixKey:              "sess:use",
+				client:                 &RedisClient{},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := Redis.NewSessionHandler(test.config)
 			assert.Equal(t, test.expected, result)
 		})
 	}
