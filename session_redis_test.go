@@ -264,6 +264,27 @@ func TestSessionRedisHandler_Get(t *testing.T) {
 	})
 }
 
+func TestSessionRedisHandler_ListByUserID(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := Redis.NewSessionHandler(SessionRedisConfig{
+		MultipleSessionPerUser: false,
+		Client:                 client,
+	})
+	session := Session{
+		Meta: SessionMeta{
+			ID:      "foo",
+			UserID:  1,
+			GroupID: "bar",
+		},
+		Data: nil,
+	}
+	_ = h.Set(session, time.Now().Add(1*time.Second).Unix())
+	expected := []Session{session}
+	result, _ := h.ListByUserID(1)
+	assert.Equal(t, expected, result)
+}
+
 func BenchmarkSession_Scan(b *testing.B) {
 	session := Session{
 		Meta: SessionMeta{},
