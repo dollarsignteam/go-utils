@@ -4,9 +4,25 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/alicebob/miniredis/v2"
 	"github.com/stretchr/testify/assert"
 )
+
+func createMockRedisClient(t *testing.T) (*miniredis.Miniredis, *RedisClient) {
+	s, err := miniredis.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := Redis.New(RedisConfig{
+		URL: fmt.Sprintf("redis://%s", s.Addr()),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s, client
+}
 
 func TestSession_Scan(t *testing.T) {
 	tests := []struct {
@@ -167,6 +183,35 @@ func TestRedis_NewSessionHandler(t *testing.T) {
 			assert.Equal(t, test.expected, result)
 		})
 	}
+}
+
+func TestSessionRedisHandler_Set(t *testing.T) {
+	s, client := createMockRedisClient(t)
+	defer s.Close()
+	h := Redis.NewSessionHandler(SessionRedisConfig{
+		MultipleSessionPerUser: true,
+		Client:                 client,
+	})
+	session := Session{
+		Meta: SessionMeta{
+			ID:      "foo",
+			UserID:  1,
+			GroupID: "bar",
+		},
+		Data: "baz",
+	}
+
+	t.Run("set", func(t *testing.T) {
+		err := h.Set(session, time.Now().Add(1*time.Second).Unix())
+		assert.Nil(t, err)
+	})
+
+	t.Run("get", func(t *testing.T) {
+		expected := Session{}
+		err := client.GetStruct("session:user:bar:1:foo", &expected)
+		assert.Nil(t, err)
+		assert.Equal(t, session, expected)
+	})
 }
 
 func BenchmarkSession_Scan(b *testing.B) {
