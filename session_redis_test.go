@@ -51,6 +51,47 @@ func TestSession_Scan(t *testing.T) {
 	}
 }
 
+func TestSessionMeta_param(t *testing.T) {
+	tests := []struct {
+		name     string
+		meta     SessionMeta
+		expected sessionKeyParam
+	}{
+		{
+			name: "no group ID",
+			meta: SessionMeta{
+				ID:     "1234",
+				UserID: 5678,
+			},
+			expected: sessionKeyParam{
+				ID:      "1234",
+				userID:  "5678",
+				groupID: "",
+			},
+		},
+		{
+			name: "with group ID",
+			meta: SessionMeta{
+				ID:      "abcd",
+				UserID:  9876,
+				GroupID: "xyz",
+			},
+			expected: sessionKeyParam{
+				ID:      "abcd",
+				userID:  "9876",
+				groupID: "xyz",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.meta.param()
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
 func BenchmarkSession_Scan(b *testing.B) {
 	session := Session{
 		Meta: SessionMeta{},
