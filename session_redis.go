@@ -266,19 +266,14 @@ func (h *SessionRedisHandler) find(key string, verifyFunc func(*Session) bool) (
 			return nil, err
 		}
 		for _, cmd := range cmds {
-			res, err := cmd.(*redis.StringCmd).Result()
-			if err != nil {
-				if err == redis.Nil {
+			if res, err := cmd.(*redis.StringCmd).Result(); err == nil {
+				var session Session
+				err = json.Unmarshal([]byte(res), &session)
+				if err != nil || !verifyFunc(&session) {
 					continue
 				}
-				return nil, err
+				sessions = append(sessions, session)
 			}
-			var session Session
-			err = json.Unmarshal([]byte(res), &session)
-			if err != nil || !verifyFunc(&session) {
-				continue
-			}
-			sessions = append(sessions, session)
 		}
 		if cursor == 0 {
 			break

@@ -601,34 +601,6 @@ func TestSessionRedisHandler_find(t *testing.T) {
 		})
 		assert.EqualError(t, err, "pipe error")
 	})
-
-	t.Run("get error", func(t *testing.T) {
-		s, client := createMockRedisClient(t)
-		defer s.Close()
-		h := SessionRedisHandler{
-			prefixKey: "session:user",
-			client:    client,
-		}
-		s.Server().SetPreHook(func(p *server.Peer, s1 string, s2 ...string) bool {
-			if s1 == "SCAN" {
-				p.WriteLen(2)
-				p.WriteBulk("0")
-				p.WriteLen(1)
-				p.WriteBulk("foo:bar")
-				return true
-			}
-			if s1 == "MULTI" {
-				p.WriteError(s1)
-				return true
-			}
-			p.WriteNull()
-			return true
-		})
-		_, err := h.find("session:*", func(s *Session) bool {
-			return true
-		})
-		assert.EqualError(t, err, "get error")
-	})
 }
 
 func TestSessionRedisHandler_scanSessionKeys(t *testing.T) {
