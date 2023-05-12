@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+
+	"golang.org/x/exp/slices"
 )
 
 // PointerOf returns a pointer to the input value
@@ -65,4 +67,69 @@ func BoolToInt(b bool) int {
 // (true for non-zero values, false for zero).
 func IntToBool(i int) bool {
 	return i != 0
+}
+
+// UnionOf returns the union of all input slices,
+// preserving the order of the first occurrence of each unique element.
+func UnionOf[T any](input ...[]T) []T {
+	m := make(map[any]struct{})
+	for _, s := range input {
+		for _, v := range s {
+			m[v] = struct{}{}
+		}
+	}
+	u := make([]T, 0, len(m))
+	for k := range m {
+		u = append(u, k.(T))
+	}
+	return u
+}
+
+// IntersectionOf returns the intersection of all input slices,
+// preserving the order of the first occurrence of each shared element.
+func IntersectionOf[T comparable](input ...[]T) []T {
+	if len(input) == 0 {
+		return []T{}
+	}
+	if len(input) == 1 {
+		return input[0]
+	}
+	result := []T{}
+	for _, v := range input[0] {
+		foundInAll := true
+		for i := 1; i < len(input); i++ {
+			if !slices.Contains(input[i], v) {
+				foundInAll = false
+				break
+			}
+		}
+		if foundInAll {
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
+// DifferenceOf returns a slice containing all unique elements across all input slices,
+// The order of elements in the resulting slice is not guaranteed
+func DifferenceOf[T comparable](input ...[]T) []T {
+	if len(input) == 0 {
+		return []T{}
+	}
+	if len(input) == 1 {
+		return input[0]
+	}
+	elementCounts := make(map[T]int)
+	for _, inputSlice := range input {
+		for _, element := range inputSlice {
+			elementCounts[element]++
+		}
+	}
+	result := []T{}
+	for element, count := range elementCounts {
+		if count == 1 {
+			result = append(result, element)
+		}
+	}
+	return result
 }

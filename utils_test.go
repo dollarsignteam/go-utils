@@ -1,6 +1,7 @@
 package utils_test
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -117,9 +118,143 @@ func TestIntToBool(t *testing.T) {
 	}
 }
 
+func TestUnionOf(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    [][]any
+		expected []any
+	}{
+		{
+			name:     "no input",
+			input:    [][]any{},
+			expected: []any{},
+		},
+		{
+			name:     "one empty slice",
+			input:    [][]any{{}},
+			expected: []any{},
+		},
+		{
+			name:     "one non-empty slice",
+			input:    [][]any{{1, 2, 3}},
+			expected: []any{1, 2, 3},
+		},
+		{
+			name:     "two non-empty slices",
+			input:    [][]any{{1, 2, 3, 3, true}, {3, 4, "foo"}},
+			expected: []any{1, 2, 3, true, 4, "foo"},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := utils.UnionOf(test.input...)
+			assert.ElementsMatch(t, test.expected, result)
+		})
+	}
+}
+
+func TestIntersectionOf(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    [][]int
+		expected []int
+	}{
+		{
+			name:     "empty input",
+			input:    nil,
+			expected: []int{},
+		},
+		{
+			name:     "single slice",
+			input:    [][]int{{1, 2, 3}},
+			expected: []int{1, 2, 3},
+		},
+		{
+			name:     "multiple slices with one intersection",
+			input:    [][]int{{1, 2}, {2, 3}, {2, 4}},
+			expected: []int{2},
+		},
+		{
+			name:     "multiple slices with no intersection",
+			input:    [][]int{{1, 2}, {2, 3}, {4, 5}},
+			expected: []int{},
+		},
+		{
+			name:     "multiple slices with multiple intersections",
+			input:    [][]int{{1, 2, 3}, {2, 3}, {3, 4}},
+			expected: []int{3},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := utils.IntersectionOf(test.input...)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestDifferenceOf(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    [][]int
+		expected []int
+	}{
+		{
+			name:     "empty input",
+			input:    [][]int{},
+			expected: []int{},
+		},
+		{
+			name:     "single slice input",
+			input:    [][]int{{1, 2, 3}},
+			expected: []int{1, 2, 3},
+		},
+		{
+			name:     "two slice inputs with no common elements",
+			input:    [][]int{{1, 2, 3}, {4, 5, 6}},
+			expected: []int{1, 2, 3, 4, 5, 6},
+		},
+		{
+			name:     "two slice inputs with some common elements",
+			input:    [][]int{{1, 2, 3}, {3, 4, 5}},
+			expected: []int{1, 2, 4, 5},
+		},
+		{
+			name:     "three slice inputs with some common elements",
+			input:    [][]int{{1, 2, 3}, {2, 3, 4}, {3, 4, 5}},
+			expected: []int{1, 5},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := utils.DifferenceOf(test.input...)
+			sort.SliceStable(result, func(i, j int) bool { return result[i] < result[j] })
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
 func BenchmarkUniqueOf(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.UniqueOf([]any{1, "foo", true, 2, "foo"})
+	}
+}
+
+func BenchmarkUnionOf(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		utils.UnionOf([][]any{{1, 2, 3, 3, true}, {3, 4, "foo"}}...)
+	}
+}
+
+func BenchmarkIntersectionOf(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		utils.IntersectionOf([][]int{{1, 2, 3}, {2, 3}, {3, 4}}...)
+	}
+}
+
+func BenchmarkDifferenceOf(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		utils.DifferenceOf([][]int{{1, 2, 3}, {2, 3, 4}, {3, 4, 5}}...)
 	}
 }
 
