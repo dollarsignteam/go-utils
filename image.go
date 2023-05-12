@@ -6,13 +6,13 @@ import (
 )
 
 // Image utility instance
-var Image imageUtil
+var Image ImageUtil
 
-// imageUtil is a utility struct for image related functions
-type imageUtil struct{}
+// ImageUtil is a utility struct for image related functions
+type ImageUtil struct{}
 
 // IsImage checks if the file is an image
-func (i imageUtil) IsImage(fh *multipart.FileHeader) bool {
+func (ImageUtil) IsImage(fh *multipart.FileHeader) bool {
 	contentType := fh.Header.Get("Content-Type")
 	return strings.HasPrefix(contentType, "image/")
 }

@@ -96,7 +96,7 @@ type SessionRedisHandler struct {
 }
 
 // NewSessionHandler creates a new Redis session handler using the provided configuration.
-func (redisUtil) NewSessionHandler(config SessionRedisConfig) SessionHandler {
+func (RedisUtil) NewSessionHandler(config SessionRedisConfig) SessionHandler {
 	config.SessionKey = strings.TrimSpace(config.SessionKey)
 	config.UserKey = strings.TrimSpace(config.UserKey)
 	if config.SessionKey == "" {
