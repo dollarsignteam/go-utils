@@ -9,13 +9,13 @@ import (
 )
 
 // Echo utility instance
-var Echo EchoUtil
+var Echo echoUtil
 
 // EchoBinder utility instance
 var EchoBinder EchoBinderWithValidation
 
-// EchoUtil is a utility struct for working with Echo instances
-type EchoUtil struct{}
+// echoUtil is a utility struct for working with Echo instances
+type echoUtil struct{}
 
 // EchoValidator is a struct that implements the echo.Validator interface.
 type EchoValidator struct{}
@@ -76,17 +76,17 @@ func (b *EchoBinderWithValidation) BindQueryParams(c echo.Context, i any) error 
 }
 
 // DefaultRootHandler handles requests to the root endpoint
-func (EchoUtil) DefaultRootHandler(c echo.Context) error {
+func (echoUtil) DefaultRootHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"message": "200 OK"})
 }
 
 // NoContentHandler handles return no content endpoint
-func (EchoUtil) NoContentHandler(c echo.Context) error {
+func (echoUtil) NoContentHandler(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
 // New creates a new instance of the Echo framework
-func (EchoUtil) New() *echo.Echo {
+func (echoUtil) New() *echo.Echo {
 	e := echo.New()
 	e.HidePort = true
 	e.HideBanner = true

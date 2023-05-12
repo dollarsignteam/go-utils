@@ -9,10 +9,10 @@ import (
 )
 
 // Redis utility instance
-var Redis RedisUtil
+var Redis redisUtil
 
-// RedisUtil is a utility struct for working with Redis
-type RedisUtil struct{}
+// redisUtil is a utility struct for working with Redis
+type redisUtil struct{}
 
 // redisPingTTL is the timeout duration for a Ping request to Redis
 var redisPingTTL = 5 * time.Second
@@ -28,7 +28,7 @@ type RedisClient struct {
 }
 
 // New creates a new Redis client based on the provided RedisConfig
-func (RedisUtil) New(config RedisConfig) (*RedisClient, error) {
+func (redisUtil) New(config RedisConfig) (*RedisClient, error) {
 	opt, err := redis.ParseURL(config.URL)
 	if err != nil {
 		return nil, err
