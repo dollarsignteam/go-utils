@@ -65,7 +65,11 @@ fmt.Println(IntToBool(1)) // Output: true
 fmt.Println(IntToBool(0)) // Output: false
 ```
 
-And other [more 📚][2]
+For more information, check out the 📚 [documentation][2].
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 ## Author
 
