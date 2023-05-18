@@ -4,6 +4,7 @@
     "bytebufferpool",
     "Cmder",
     "cmds",
+    "curr",
     "datetime",
     "davecgh",
     "difflib",
