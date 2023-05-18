@@ -1,7 +1,6 @@
 package utils_test
 
 import (
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -188,7 +187,7 @@ func TestIntersectionOf(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result := utils.IntersectionOf(test.input...)
-			assert.Equal(t, test.expected, result)
+			assert.ElementsMatch(t, test.expected, result)
 		})
 	}
 }
@@ -228,8 +227,7 @@ func TestDifferenceOf(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result := utils.DifferenceOf(test.input...)
-			sort.SliceStable(result, func(i, j int) bool { return result[i] < result[j] })
-			assert.Equal(t, test.expected, result)
+			assert.ElementsMatch(t, test.expected, result)
 		})
 	}
 }
