@@ -7,6 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 // EchoJWT utility instance
@@ -111,4 +112,9 @@ func (eJWT EchoJWTUtil) GetClaims(token *jwt.Token) (*jwt.RegisteredClaims, erro
 		return nil, fmt.Errorf("invalid token claims")
 	}
 	return claims, nil
+}
+
+// SetSkipper sets the middleware skipper function for the EchoJWTUtil instance.
+func (eJWT *EchoJWTUtil) SetSkipper(skipper middleware.Skipper) {
+	eJWT.echoJWTConfig.Skipper = skipper
 }

@@ -156,3 +156,23 @@ func TestGetClaims_InvalidToken(t *testing.T) {
 	assert.Nil(t, result)
 	assert.EqualError(t, err, "invalid token claims")
 }
+
+func TestSetSkipper(t *testing.T) {
+	echoJWT := utils.EchoJWT.New(testEchoJWTConfig)
+	echoJWT.SetSkipper(func(c echo.Context) bool {
+		return true
+	})
+	e := echo.New()
+	e.GET("/", func(c echo.Context) error {
+		token := c.Get("user")
+		return c.JSON(http.StatusOK, token)
+	})
+	e.Use(echoJWT.JWTAuth())
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	token := echoJWT.CreateToken(testClaims)
+	req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token.SignedString))
+	e.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "null\n", rec.Body.String())
+}
