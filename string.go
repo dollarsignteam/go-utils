@@ -5,6 +5,8 @@ import (
 	"crypto/sha1" // #nosec
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
+	"hash/crc32"
 	"strings"
 
 	"github.com/google/uuid"
@@ -84,4 +86,9 @@ func (StringUtil) HashPassword(password string) (string, error) {
 // VerifyPassword checks if the provided plain text password matches the existing bcrypt hash
 func (StringUtil) VerifyPassword(hashedPassword, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+}
+
+// HashCrc32 generates a CRC32 hash for the input string
+func (StringUtil) HashCrc32(s string) string {
+	return fmt.Sprintf("%08x", crc32.ChecksumIEEE([]byte(s)))
 }

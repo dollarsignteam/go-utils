@@ -60,6 +60,26 @@ func TestHashPassword_Error(t *testing.T) {
 	assert.EqualError(t, err, "bcrypt: password length exceeds 72 bytes")
 }
 
+func TestHashCrc32(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{name: "Test Case 1", input: "Hello, World!", expected: "ec4ac3d0"},
+		{name: "Test Case 2", input: "Lorem Ipsum", expected: "358ad45d"},
+		{name: "Test Case 3", input: "1234567890", expected: "261daee5"},
+		{name: "Test Case 4", input: "A4D7B2B7-D62D-423C-B0C2-2A871F98E427", expected: "042b1405"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := utils.String.HashCrc32(test.input)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
 func BenchmarkRemoveDuplicateSpaces(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.String.RemoveDuplicateSpaces(TestSpacesString)
@@ -93,5 +113,11 @@ func BenchmarkSHA256(b *testing.B) {
 func BenchmarkHashPassword(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.String.HashPassword(TestSpacesString)
+	}
+}
+
+func BenchmarkHashCrc32(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		utils.String.HashCrc32(TestSpacesString)
 	}
 }
