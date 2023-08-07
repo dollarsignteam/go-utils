@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/Azure/go-amqp"
@@ -25,6 +26,7 @@ type AMQPClient struct {
 	ReceiverSession *amqp.Session
 	SenderList      []*amqp.Sender
 	ReceiverList    []*amqp.Receiver
+	mutex           sync.Mutex
 }
 
 // New creates a new AMQP client
@@ -76,4 +78,51 @@ func (client *AMQPClient) Close() {
 	_ = client.SenderSession.Close(context.TODO())
 	_ = client.ReceiverSession.Close(context.TODO())
 	_ = client.Connection.Close()
+}
+
+// NewSender creates a new sender for the given queue
+func (client *AMQPClient) NewSender(queue string) (*amqp.Sender, error) {
+	sender, err := client.SenderSession.NewSender(context.TODO(), queue, nil)
+	if err != nil {
+		return nil, err
+	}
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+	client.SenderList = append(client.SenderList, sender)
+	return sender, nil
+}
+
+// NewReceiver creates a new receiver for the given queue
+func (client *AMQPClient) NewReceiver(queue string) (*amqp.Receiver, error) {
+	receiver, err := client.ReceiverSession.NewReceiver(context.TODO(), queue, nil)
+	if err != nil {
+		return nil, err
+	}
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+	client.ReceiverList = append(client.ReceiverList, receiver)
+	return receiver, nil
+}
+
+// NewSenderList creates a list of senders for the given queue
+func (client *AMQPClient) NewReceiverList(queue string, count int) ([]*amqp.Receiver, error) {
+	var receiverList []*amqp.Receiver
+	for i := 0; i < count; i++ {
+		receiver, err := client.NewReceiver(queue)
+		if err != nil {
+			return nil, err
+		}
+		receiverList = append(receiverList, receiver)
+	}
+	return receiverList, nil
+}
+
+// NewPublisher creates a new publisher for the given topic
+func (client *AMQPClient) NewPublisher(topic string) (*amqp.Sender, error) {
+	return client.NewSender(fmt.Sprintf("topic://%s", topic))
+}
+
+// NewSubscriber creates a new subscriber for the given topic
+func (client *AMQPClient) NewSubscriber(topic string) (*amqp.Receiver, error) {
+	return client.NewReceiver(fmt.Sprintf("topic://%s", topic))
 }
