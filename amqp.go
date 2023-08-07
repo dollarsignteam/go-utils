@@ -173,3 +173,17 @@ func (client *AMQPClient) Received(receiver *amqp.Receiver, messageHandlerFunc M
 		}
 	}
 }
+
+// ReceivedList receives messages from the given list of receivers
+// and handles them with the provided message handler function.
+func (client *AMQPClient) ReceivedList(receiverList []*amqp.Receiver, messageHandlerFunc MessageHandlerFunc) {
+	var wg sync.WaitGroup
+	for _, receiver := range receiverList {
+		wg.Add(1)
+		go func(r *amqp.Receiver) {
+			defer wg.Done()
+			client.Received(r, messageHandlerFunc)
+		}(receiver)
+	}
+	wg.Wait()
+}
