@@ -3,6 +3,7 @@ module github.com/dollarsignteam/go-utils
 go 1.19
 
 require (
+	github.com/Azure/go-amqp v1.0.1
 	github.com/alicebob/miniredis/v2 v2.30.2
 	github.com/go-playground/validator/v10 v10.15.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
