@@ -42,8 +42,8 @@ func (AMQPUtil) New(config AMQPConfig) (*AMQPClient, error) {
 	receiverSession, err := connection.NewSession(ctx, nil)
 	if err != nil {
 		defer func() {
-			senderSession.Close(ctx)
-			connection.Close()
+			_ = senderSession.Close(ctx)
+			_ = connection.Close()
 		}()
 		return nil, err
 	}
