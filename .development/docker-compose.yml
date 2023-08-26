@@ -1,0 +1,27 @@
+version: "3.2"
+
+services:
+  permission:
+    image: busybox:latest
+    command: find /data -mindepth 1 -maxdepth 1 ! -perm 777 -exec chmod 777 {} +
+    volumes:
+      - ./data/activemq:/data/activemq
+
+  activemq:
+    image: c18s/activemq:latest
+    restart: always
+    depends_on:
+      permission:
+        condition: service_completed_successfully
+    ports:
+      - "1883:1883"
+      - "5672:5672"
+      - "8161:8161"
+      - "61613:61613"
+      - "61614:61614"
+      - "61616:61616"
+    volumes:
+      - ./data/activemq:/opt/activemq/data
+    # environment:
+    #   ACTIVEMQ_USER: ""
+    #   ACTIVEMQ_PASSWORD: ""

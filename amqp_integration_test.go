@@ -1,3 +1,5 @@
+//go:build integration
+
 package utils_test
 
 import (
@@ -8,7 +10,7 @@ import (
 	"github.com/dollarsignteam/go-utils"
 )
 
-func TestAMQPNew(t *testing.T) {
+func TestIntegrationAMQP(t *testing.T) {
 	var tests = []struct {
 		name           string
 		config         utils.AMQPConfig

@@ -1,4 +1,7 @@
 {
+  "gopls.env": {
+    "GOFLAGS": "-tags=integration"
+  },
   "cSpell.words": [
     "alicebob",
     "AMQP",
