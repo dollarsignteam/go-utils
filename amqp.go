@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/Azure/go-amqp"
 )
@@ -33,8 +32,6 @@ type AMQPClient struct {
 	mutex           sync.Mutex
 	isClosed        bool
 }
-
-var amqpTimeoutTTL = 60 * time.Second
 
 // New creates a new AMQP client
 func (AMQPUtil) New(config AMQPConfig) (*AMQPClient, error) {
@@ -135,22 +132,22 @@ func (client *AMQPClient) NewSubscriber(topic string) (*amqp.Receiver, error) {
 	return client.NewReceiver(fmt.Sprintf("topic://%s", topic))
 }
 
-// Send sends the given message to the given sender
-func (client *AMQPClient) Send(sender *amqp.Sender, message *amqp.Message) error {
-	ctx, cancel := context.WithTimeout(context.Background(), amqpTimeoutTTL)
-	defer cancel()
+// Send sends the given message to the given sender with the specified persistence flag.
+// If the persistence flag is set to true, the message will be saved to disk for durability.
+// If the message's header is nil, it will be initialized with a new amqp.MessageHeader.
+// The Durable field of the message header will be updated to reflect the persistence flag.
+// Note: Setting the persistence flag to true might result in slower performance.
+func (client *AMQPClient) Send(sender *amqp.Sender, message *amqp.Message, persistent bool) error {
 	if message.Header == nil {
 		message.Header = &amqp.MessageHeader{}
 	}
-	message.Header.Durable = true
-	return sender.Send(ctx, message, nil)
+	message.Header.Durable = message.Header.Durable || persistent
+	return sender.Send(context.TODO(), message, nil)
 }
 
 // Publish publishes the given message to the given publisher
 func (client *AMQPClient) Publish(publisher *amqp.Sender, message *amqp.Message) error {
-	ctx, cancel := context.WithTimeout(context.Background(), amqpTimeoutTTL)
-	defer cancel()
-	return publisher.Send(ctx, message, nil)
+	return publisher.Send(context.TODO(), message, nil)
 }
 
 // Received receives messages from the given receiver
