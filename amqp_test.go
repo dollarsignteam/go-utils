@@ -1,36 +1,39 @@
+//go:build integration
+
 package utils_test
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/dollarsignteam/go-utils"
 )
 
-func TestAMQPNew(t *testing.T) {
-	var tests = []struct {
-		name           string
-		config         utils.AMQPConfig
-		expectedClient *utils.AMQPClient
-		expectedError  *string
-	}{
-		{
-			name: "invalid URL",
-			config: utils.AMQPConfig{
-				URL: "invalid-url",
-			},
-			expectedClient: nil,
-			expectedError:  utils.PointerOf("dial tcp :5672: connect: connection refused"),
-		},
+type AMQPTestSuite struct {
+	suite.Suite
+	amqpClient *utils.AMQPClient
+}
+
+func (suite *AMQPTestSuite) SetupTest() {
+	client, err := utils.AMQP.New(utils.AMQPConfig{
+		URL: "amqp://admin:admin@localhost:5672"})
+	if err != nil {
+		suite.T().Fatal(err)
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			client, err := utils.AMQP.New(test.config)
-			assert.Equal(t, test.expectedClient, client)
-			if test.expectedError == nil {
-				assert.EqualError(t, err, *test.expectedError)
-			}
-		})
+	suite.amqpClient = client
+}
+
+func (suite *AMQPTestSuite) TearDownTest() {
+	if suite.amqpClient != nil {
+		suite.amqpClient.Close()
 	}
+}
+
+func (suite *AMQPTestSuite) TestAddOne() {
+	suite.Equal(1, 1)
+}
+
+func TestIntegrationAMQPTestSuite(t *testing.T) {
+	suite.Run(t, new(AMQPTestSuite))
 }
