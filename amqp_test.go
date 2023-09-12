@@ -16,7 +16,6 @@ import (
 type AMQPTestSuite struct {
 	suite.Suite
 	amqpClient *utils.AMQPClient
-	wg         sync.WaitGroup
 }
 
 func (suite *AMQPTestSuite) SetupTest() {
@@ -35,20 +34,24 @@ func (suite *AMQPTestSuite) TearDownTest() {
 }
 
 func (suite *AMQPTestSuite) TestSendToQueue() {
-	sender, err := suite.amqpClient.NewSender("test-queue")
+	queueName := "test-queue"
+	messageCount := 1000
+	sender, err := suite.amqpClient.NewSender(queueName)
 	if err != nil {
 		suite.FailNow("failed to create sender", err)
 		return
 	}
 	suite.NotNil(sender)
-	for i := 0; i < 1000; i++ {
-		suite.wg.Add(1)
+	wg1 := sync.WaitGroup{}
+	for i := 0; i < messageCount; i++ {
+		wg1.Add(1)
 		go func(index int) {
-			defer suite.wg.Done()
-			id := fmt.Sprintf("id = %d", index+1)
+			defer wg1.Done()
+			id := fmt.Sprintf("index[%d]", index)
 			message := amqp.NewMessage([]byte(id))
 			message.Properties = &amqp.MessageProperties{
 				CorrelationID: id,
+				GroupID:       utils.PointerOf(id),
 			}
 			err := suite.amqpClient.Send(sender, message, false)
 			if err != nil {
@@ -57,7 +60,30 @@ func (suite *AMQPTestSuite) TestSendToQueue() {
 		}(i)
 	}
 	suite.T().Log("Waiting for all messages to be sent...")
-	suite.wg.Wait()
+	wg1.Wait()
+	count := 0
+	receiverListCount := 10
+	// r, e := suite.amqpClient.NewReceiver(queueName)
+	// suite.Nil(e)
+	rList, eList := suite.amqpClient.NewReceiverList(queueName, receiverListCount)
+	suite.Nil(eList)
+	suite.Len(rList, receiverListCount)
+	wg2 := sync.WaitGroup{}
+	wg2.Add(messageCount)
+	handlerFunc := func(message *amqp.Message, err error) utils.AMQPMessageHandlerResult {
+		count++
+		return utils.AMQPMessageHandlerResult{
+			Callback: func() {
+				suite.T().Log("process")
+				defer wg2.Done()
+			},
+		}
+	}
+	// go suite.amqpClient.Received(r, handlerFunc)
+	go suite.amqpClient.ReceivedList(rList, handlerFunc)
+	suite.T().Log("Waiting for all messages to be received...")
+	wg2.Wait()
+	suite.Equal(messageCount, count)
 }
 
 func (suite *AMQPTestSuite) TestPublishToTopic() {
@@ -67,11 +93,12 @@ func (suite *AMQPTestSuite) TestPublishToTopic() {
 		return
 	}
 	suite.NotNil(publisher)
+	wg1 := sync.WaitGroup{}
 	for i := 0; i < 1000; i++ {
-		suite.wg.Add(1)
+		wg1.Add(1)
 		go func(index int) {
-			defer suite.wg.Done()
-			id := fmt.Sprintf("id = %d", index+1)
+			defer wg1.Done()
+			id := fmt.Sprintf("index[%d]", index)
 			message := amqp.NewMessage([]byte(id))
 			message.Properties = &amqp.MessageProperties{
 				CorrelationID: id,
@@ -83,7 +110,7 @@ func (suite *AMQPTestSuite) TestPublishToTopic() {
 		}(i)
 	}
 	suite.T().Log("Waiting for all messages to be sent...")
-	suite.wg.Wait()
+	wg1.Wait()
 }
 
 func TestIntegrationAMQPTestSuite(t *testing.T) {

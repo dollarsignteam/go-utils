@@ -19,8 +19,15 @@ type AMQPConfig struct {
 	URL string
 }
 
-// MessageHandlerFunc is the function to handle the received message
-type MessageHandlerFunc func(message *amqp.Message, err error) (bool, error)
+// AMQPMessageHandlerFunc is the function to handle the received message
+type AMQPMessageHandlerFunc func(message *amqp.Message, err error) AMQPMessageHandlerResult
+
+// AMQPMessageHandlerResult is a wrapper around the AMQP message handler
+type AMQPMessageHandlerResult struct {
+	IsClosed bool
+	Error    error
+	Callback func()
+}
 
 // AMQPClient is a wrapper around the AMQP client
 type AMQPClient struct {
@@ -155,25 +162,28 @@ func (client *AMQPClient) Publish(publisher *amqp.Sender, message *amqp.Message)
 // If the message handler function returns false, the loop stops.
 // If the message handler function returns an error, the message is rejected;
 // otherwise, it is accepted for further processing.
-func (client *AMQPClient) Received(receiver *amqp.Receiver, messageHandlerFunc MessageHandlerFunc) {
+func (client *AMQPClient) Received(receiver *amqp.Receiver, messageHandlerFunc AMQPMessageHandlerFunc) {
 	for !client.isClosed {
 		message, err := receiver.Receive(context.TODO(), nil)
-		ok, err := messageHandlerFunc(message, err)
-		if err != nil {
+		h := messageHandlerFunc(message, err)
+		if h.Error != nil {
 			_ = receiver.RejectMessage(context.TODO(), message, nil)
 		} else {
 			_ = receiver.AcceptMessage(context.TODO(), message)
 		}
-		if !ok {
+		if h.IsClosed {
 			_ = receiver.Close(context.TODO())
 			break
+		}
+		if h.Callback != nil {
+			h.Callback()
 		}
 	}
 }
 
 // ReceivedList receives messages from the given list of receivers
 // and handles them with the provided message handler function.
-func (client *AMQPClient) ReceivedList(receiverList []*amqp.Receiver, messageHandlerFunc MessageHandlerFunc) {
+func (client *AMQPClient) ReceivedList(receiverList []*amqp.Receiver, messageHandlerFunc AMQPMessageHandlerFunc) {
 	var wg sync.WaitGroup
 	for _, receiver := range receiverList {
 		wg.Add(1)
