@@ -20,13 +20,12 @@ type AMQPConfig struct {
 }
 
 // AMQPMessageHandlerFunc is the function to handle the received message
-type AMQPMessageHandlerFunc func(message *amqp.Message, err error) AMQPMessageHandlerResult
+type AMQPMessageHandlerFunc func(message *amqp.Message, err error) *AMQPMessageHandler
 
-// AMQPMessageHandlerResult is a wrapper around the AMQP message handler
-type AMQPMessageHandlerResult struct {
+// AMQPMessageHandler is the handler for the received message
+type AMQPMessageHandler struct {
 	IsClosed bool
-	Error    error
-	Callback func()
+	Rejected bool
 }
 
 // AMQPClient is a wrapper around the AMQP client
@@ -165,20 +164,25 @@ func (client *AMQPClient) Publish(publisher *amqp.Sender, message *amqp.Message)
 func (client *AMQPClient) Received(receiver *amqp.Receiver, messageHandlerFunc AMQPMessageHandlerFunc) {
 	for !client.isClosed {
 		message, err := receiver.Receive(context.TODO(), nil)
+		if _, ok := err.(*amqp.LinkError); ok {
+			return
+		}
 		h := messageHandlerFunc(message, err)
-		if h.Error != nil {
-			_ = receiver.RejectMessage(context.TODO(), message, nil)
-		} else {
-			_ = receiver.AcceptMessage(context.TODO(), message)
+		if h == nil {
+			h = &AMQPMessageHandler{}
+		}
+		if err == nil {
+			if h.Rejected {
+				_ = receiver.RejectMessage(context.TODO(), message, nil)
+			} else {
+				_ = receiver.AcceptMessage(context.TODO(), message)
+			}
 		}
 		if h.IsClosed {
-			_ = receiver.Close(context.TODO())
 			break
 		}
-		if h.Callback != nil {
-			h.Callback()
-		}
 	}
+	_ = receiver.Close(context.TODO())
 }
 
 // ReceivedList receives messages from the given list of receivers
