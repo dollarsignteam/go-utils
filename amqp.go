@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -164,7 +165,8 @@ func (client *AMQPClient) Publish(publisher *amqp.Sender, message *amqp.Message)
 func (client *AMQPClient) Received(receiver *amqp.Receiver, messageHandlerFunc AMQPMessageHandlerFunc) {
 	for !client.isClosed {
 		message, err := receiver.Receive(context.TODO(), nil)
-		if _, ok := err.(*amqp.LinkError); ok {
+		err, isClosed := client.IsErrorClosed(err)
+		if _, closed := client.IsErrorClosed(err); closed {
 			return
 		}
 		h := messageHandlerFunc(message, err)
@@ -178,7 +180,7 @@ func (client *AMQPClient) Received(receiver *amqp.Receiver, messageHandlerFunc A
 				_ = receiver.AcceptMessage(context.TODO(), message)
 			}
 		}
-		if h.IsClosed {
+		if h.IsClosed || isClosed {
 			break
 		}
 	}
@@ -197,4 +199,17 @@ func (client *AMQPClient) ReceivedList(receiverList []*amqp.Receiver, messageHan
 		}(receiver)
 	}
 	wg.Wait()
+}
+
+// IsErrorClosed checks if the given error is a closed error
+func (client *AMQPClient) IsErrorClosed(err error) (error, bool) {
+	switch e := err.(type) {
+	case *amqp.ConnError, *amqp.SessionError, *amqp.LinkError:
+		if e.Error() == "EOF" {
+			return errors.New("amqp: connection, session, link error"), true
+		}
+		return e, true
+	default:
+		return err, false
+	}
 }

@@ -46,12 +46,12 @@ func (suite *AMQPTestSuite) TestSendToQueue() {
 	count := 0
 	receiverListCount := 9
 	r, e := suite.amqpClient.NewReceiver(queueName)
-	suite.Nil(e)
+	suite.NoError(e)
 	rList, eList := suite.amqpClient.NewReceiverList(queueName, receiverListCount)
-	suite.Nil(eList)
+	suite.NoError(eList)
 	suite.Len(rList, receiverListCount)
 	handlerFunc := func(message *amqp.Message, err error) *utils.AMQPMessageHandler {
-		suite.Nil(err)
+		suite.NoError(err)
 		if err != nil {
 			return &utils.AMQPMessageHandler{
 				Rejected: true,
@@ -74,7 +74,7 @@ func (suite *AMQPTestSuite) TestSendToQueue() {
 				GroupID: utils.PointerOf(id),
 			}
 			err := suite.amqpClient.Send(sender, message, false)
-			suite.Nil(err)
+			suite.NoError(err)
 		}(i)
 	}
 	suite.T().Log("Waiting for all messages to be sent...")
@@ -94,9 +94,9 @@ func (suite *AMQPTestSuite) TestPublishToTopic() {
 	wg := sync.WaitGroup{}
 	count := 0
 	r, e := suite.amqpClient.NewSubscriber(topicName)
-	suite.Nil(e)
+	suite.NoError(e)
 	handlerFunc := func(message *amqp.Message, err error) *utils.AMQPMessageHandler {
-		suite.Nil(err)
+		suite.NoError(err)
 		if err != nil {
 			return &utils.AMQPMessageHandler{
 				Rejected: true,
@@ -117,7 +117,7 @@ func (suite *AMQPTestSuite) TestPublishToTopic() {
 			id := fmt.Sprintf("index[%d]", index)
 			message := amqp.NewMessage([]byte(id))
 			err := suite.amqpClient.Publish(publisher, message)
-			suite.Nil(err)
+			suite.NoError(err)
 		}(i)
 	}
 	suite.T().Log("Waiting for all messages to be publish...")
