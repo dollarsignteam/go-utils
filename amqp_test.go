@@ -58,6 +58,9 @@ func (suite *AMQPTestSuite) TestSendToQueue() {
 				IsClosed: false,
 			}
 		}
+		subject := utils.AMQP.GetSubject(message)
+		data := string(message.GetData())
+		suite.Equal(subject, data)
 		count++
 		defer wg.Done()
 		return nil
@@ -72,6 +75,7 @@ func (suite *AMQPTestSuite) TestSendToQueue() {
 			message := amqp.NewMessage([]byte(id))
 			message.Properties = &amqp.MessageProperties{
 				GroupID: utils.PointerOf(id),
+				Subject: utils.PointerOf(id),
 			}
 			err := suite.amqpClient.Send(sender, message, false)
 			suite.NoError(err)

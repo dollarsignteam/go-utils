@@ -67,6 +67,14 @@ func (AMQPUtil) New(config AMQPConfig) (*AMQPClient, error) {
 	}, nil
 }
 
+// GetSubject gets the subject of the given message
+func (AMQPUtil) GetSubject(message *amqp.Message) string {
+	if message == nil || message.Properties == nil {
+		return ""
+	}
+	return ValueOf(message.Properties.Subject)
+}
+
 // Close closes all senders, receivers, sender session,
 // receiver session and the connection of the AMQPClient
 func (client *AMQPClient) Close() {
