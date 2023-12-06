@@ -1,6 +1,7 @@
 package utils_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +10,7 @@ import (
 )
 
 var TestSpacesString = "  foo \t\r\n - bar  \u200B!  "
+var TestEMVCoQRString = "00020101021229370016A000000677010111011300660000000005303764540519.975802TH63047B1E"
 
 func TestRemoveDuplicateSpaces(t *testing.T) {
 	expected := "foo - bar !"
@@ -80,6 +82,26 @@ func TestHashCrc32(t *testing.T) {
 	}
 }
 
+func TestParseEMVCoQRString(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		errExpected error
+	}{
+		{name: "Test Case 1", input: "00020101021229370016A000000677010111011300660000000005303764540519.975802TH63047B1E", errExpected: nil},
+		{name: "Test Case 2", input: "000", errExpected: fmt.Errorf("invalid qr structure")},
+		{name: "Test Case 3", input: "00020101021229370016A", errExpected: fmt.Errorf("invalid specified qr string length")},
+		{name: "Test Case 4", input: "0002010102122937000006000005303764540519.975802TH63047B1E", errExpected: fmt.Errorf("invalid qr structure")},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := utils.String.ParseEMVCoQRString(test.input)
+			assert.Equal(t, test.errExpected, err)
+		})
+	}
+}
+
 func BenchmarkRemoveDuplicateSpaces(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.String.RemoveDuplicateSpaces(TestSpacesString)
@@ -119,5 +141,11 @@ func BenchmarkHashPassword(b *testing.B) {
 func BenchmarkHashCrc32(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		utils.String.HashCrc32(TestSpacesString)
+	}
+}
+
+func BenchmarkParseEMVCoQRString(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		utils.String.ParseEMVCoQRString(TestEMVCoQRString)
 	}
 }
