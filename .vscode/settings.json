@@ -6,6 +6,7 @@
     "alicebob",
     "AMQP",
     "bytebufferpool",
+    "CCITT",
     "Cmder",
     "cmds",
     "curr",
@@ -25,6 +26,7 @@
     "pmezard",
     "Println",
     "sess",
+    "sigurn",
     "valyala"
   ]
 }

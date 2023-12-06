@@ -11,8 +11,15 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/sigurn/crc16"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var crc16Table *crc16.Table
+
+func init() {
+	crc16Table = crc16.MakeTable(crc16.CRC16_CCITT_FALSE)
+}
 
 // Constants representing various Unicode characters
 const (
@@ -107,6 +114,9 @@ func (StringUtil) HashCrc32(s string) string {
 
 // Parse EMVCoQR string to struct
 func (StringUtil) ParseEMVCoQRString(qrString string) (EMVCoQRInfo, error) {
+	if err := ValidateEMVCoQRString(qrString); err != nil {
+		return EMVCoQRInfo{}, err
+	}
 	result := EMVCoQRInfo{}
 	index := 0
 	for index < len(qrString) {
@@ -143,4 +153,19 @@ func (StringUtil) ParseEMVCoQRString(qrString string) (EMVCoQRInfo, error) {
 		index += 4 + length
 	}
 	return result, nil
+}
+
+// ValidateEMVCoQRString validates the EMVCoQR string
+func ValidateEMVCoQRString(qrString string) error {
+	if len(qrString) < 14 {
+		return fmt.Errorf("invalid specified qr string length")
+	}
+	data := []byte(qrString[:len(qrString)-4])
+	crc := crc16.Checksum(data, crc16Table)
+	calculatedCRC := fmt.Sprintf("%04X", int(crc))
+	expectedCRC := qrString[len(qrString)-4:]
+	if calculatedCRC != expectedCRC {
+		return fmt.Errorf("qr checksum is incorrect")
+	}
+	return nil
 }

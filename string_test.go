@@ -10,7 +10,7 @@ import (
 )
 
 var TestSpacesString = "  foo \t\r\n - bar  \u200B!  "
-var TestEMVCoQRString = "00020101021229370016A000000677010111011300660000000005303764540519.975802TH63047B1E"
+var TestEMVCoQRString = "00020101021229370016A000000677010111011300668776123235802TH5303764540523.99630446F5"
 
 func TestRemoveDuplicateSpaces(t *testing.T) {
 	expected := "foo - bar !"
@@ -88,10 +88,9 @@ func TestParseEMVCoQRString(t *testing.T) {
 		input       string
 		errExpected error
 	}{
-		{name: "Test Case 1", input: "00020101021229370016A000000677010111011300660000000005303764540519.975802TH63047B1E", errExpected: nil},
-		{name: "Test Case 2", input: "000", errExpected: fmt.Errorf("invalid qr structure")},
-		{name: "Test Case 3", input: "00020101021229370016A", errExpected: fmt.Errorf("invalid specified qr string length")},
-		{name: "Test Case 4", input: "0002010102122937000006000005303764540519.975802TH63047B1E", errExpected: fmt.Errorf("invalid qr structure")},
+		{name: "Test Case 1", input: "", errExpected: fmt.Errorf("invalid specified qr string length")},
+		{name: "Test Case 2", input: "00020101021229370016A000000677010111011300668776123235802TH5303764540523.99630446F5", errExpected: nil},
+		{name: "Test Case 3", input: "00020101021229370016A000000677010111011300668776123235801TH5303764540523.99630446F5", errExpected: fmt.Errorf("qr checksum is incorrect")},
 	}
 
 	for _, test := range tests {
