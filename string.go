@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"hash/crc32"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -34,6 +35,17 @@ var zeroWithReplacer = strings.NewReplacer(
 	string(rightToLeftMark), empty,
 	string(noBreakingSpace), empty,
 )
+
+// EMVCoQRInfo for QR string
+type EMVCoQRInfo struct {
+	Format          string
+	MerchantAccount string
+	Amount          string
+	PhoneNumber     string
+	CountryCode     string
+	Crc             string
+	CurrencyISO4217 string
+}
 
 // String utility instance
 var String StringUtil
@@ -91,4 +103,44 @@ func (StringUtil) VerifyPassword(hashedPassword, password string) error {
 // HashCrc32 generates a CRC32 hash for the input string
 func (StringUtil) HashCrc32(s string) string {
 	return fmt.Sprintf("%08x", crc32.ChecksumIEEE([]byte(s)))
+}
+
+// Parse EMVCoQR string to struct
+func (StringUtil) ParseEMVCoQRString(qrString string) (EMVCoQRInfo, error) {
+	result := EMVCoQRInfo{}
+	index := 0
+	for index < len(qrString) {
+		if index+4 > len(qrString) {
+			return EMVCoQRInfo{}, fmt.Errorf("invalid qr structure")
+		}
+		id := qrString[index : index+2]
+		length, err := strconv.Atoi(qrString[index+2 : index+4])
+		if err != nil {
+			return EMVCoQRInfo{}, fmt.Errorf("invalid qr structure")
+		}
+		if index+4+length > len(qrString) {
+			return EMVCoQRInfo{}, fmt.Errorf("invalid specified qr string length")
+		}
+		value := qrString[index+4 : index+4+length]
+		switch id {
+		case "01":
+			result.Format = value
+		case "29":
+			prefixPhoneIndex := strings.Index(value, "011300")
+			result.MerchantAccount = value
+			if prefixPhoneIndex != -1 {
+				result.PhoneNumber = value[prefixPhoneIndex+6:]
+			}
+		case "54":
+			result.Amount = value
+		case "58":
+			result.CountryCode = value
+		case "63":
+			result.Crc = value
+		case "53":
+			result.CurrencyISO4217 = value
+		}
+		index += 4 + length
+	}
+	return result, nil
 }
