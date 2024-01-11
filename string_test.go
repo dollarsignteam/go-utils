@@ -84,19 +84,57 @@ func TestHashCrc32(t *testing.T) {
 
 func TestParseEMVCoQRString(t *testing.T) {
 	tests := []struct {
-		name        string
-		input       string
-		errExpected error
+		name         string
+		input        string
+		errExpected  error
+		infoExpected utils.EMVCoQRInfo
 	}{
-		{name: "Test Case 1", input: "", errExpected: fmt.Errorf("invalid specified qr string length")},
-		{name: "Test Case 2", input: "00020101021229370016A000000677010111011300668776123235802TH5303764540523.99630446F5", errExpected: nil},
-		{name: "Test Case 3", input: "00020101021229370016A000000677010111011300668776123235801TH5303764540523.99630446F5", errExpected: fmt.Errorf("qr checksum is incorrect")},
+		{
+			name:        "Test Case 1",
+			input:       "",
+			errExpected: fmt.Errorf("invalid specified qr string length"),
+		},
+		{
+			name:        "Test Case 2",
+			input:       "00020101021229370016A000000677010111011300668776123235801TH5303764540523.99630446F5",
+			errExpected: fmt.Errorf("qr checksum is incorrect"),
+		},
+		{
+			name:  "Test Case 3",
+			input: "00020101021229370016A000000677010111011300668776123235802TH5303764540523.99630446F5",
+			infoExpected: utils.EMVCoQRInfo{
+				Format:          "12",
+				MerchantAccount: "0016A00000067701011101130066877612323",
+				Amount:          "23.99",
+				PhoneNumber:     "66877612323",
+				CountryCode:     "TH",
+				Crc:             "46F5",
+				CurrencyISO4217: "764",
+			},
+		},
+		{
+			name:  "Test Case 4",
+			input: "00020101021230730016A00000067701011201150107536000315080214KB0000018898870312KPSX8YYB3JO853037645406100.005802TH62130709X8YYB3JO863049EEA",
+			infoExpected: utils.EMVCoQRInfo{
+				Format:          "12",
+				MerchantAccount: "0016A00000067701011201150107536000315080214KB0000018898870312KPSX8YYB3JO8",
+				Amount:          "100.00",
+				PhoneNumber:     "",
+				CountryCode:     "TH",
+				Crc:             "9EEA",
+				CurrencyISO4217: "764",
+				BillerID:        "010753600031508",
+				Ref1:            "KB000001889887",
+				Ref2:            "KPSX8YYB3JO8",
+				Ref3:            "X8YYB3JO8",
+			},
+		},
 	}
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := utils.String.ParseEMVCoQRString(test.input)
+			info, err := utils.String.ParseEMVCoQRString(test.input)
 			assert.Equal(t, test.errExpected, err)
+			assert.Equal(t, test.infoExpected, info)
 		})
 	}
 }

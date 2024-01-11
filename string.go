@@ -52,6 +52,10 @@ type EMVCoQRInfo struct {
 	CountryCode     string
 	Crc             string
 	CurrencyISO4217 string
+	BillerID        string
+	Ref1            string
+	Ref2            string
+	Ref3            string
 }
 
 // String utility instance
@@ -141,10 +145,40 @@ func (StringUtil) ParseEMVCoQRString(qrString string) (EMVCoQRInfo, error) {
 			if prefixPhoneIndex != -1 {
 				result.PhoneNumber = value[prefixPhoneIndex+6:]
 			}
+		case "30":
+			result.MerchantAccount = value
+			index2 := 0
+			for index2 < len(value) {
+				if index2+4 > len(value) {
+					return EMVCoQRInfo{}, fmt.Errorf("invalid qr structure")
+				}
+				id2 := value[index2 : index2+2]
+				length2, err := strconv.Atoi(value[index2+2 : index2+4])
+				if err != nil {
+					return EMVCoQRInfo{}, fmt.Errorf("invalid qr structure")
+				}
+				if index2+4+length2 > len(value) {
+					return EMVCoQRInfo{}, fmt.Errorf("invalid specified qr string length")
+				}
+				value2 := value[index2+4 : index2+4+length2]
+				switch id2 {
+				case "01":
+					result.BillerID = value2
+				case "02":
+					result.Ref1 = value2
+				case "03":
+					result.Ref2 = value2
+				}
+				index2 += 4 + length2
+			}
 		case "54":
 			result.Amount = value
 		case "58":
 			result.CountryCode = value
+		case "62":
+			if len(value) > 4 {
+				result.Ref3 = value[4:]
+			}
 		case "63":
 			result.Crc = value
 		case "53":
