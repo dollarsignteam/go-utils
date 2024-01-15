@@ -161,9 +161,9 @@ func TestAESEncryptDecrypt(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cipherText, err := utils.AESEncrypt(test.key, test.plaintext)
+			cipherText, err := utils.String.AESEncrypt(test.key, test.plaintext)
 			assert.NoError(t, err)
-			decryptedText, err := utils.AESDecrypt(test.key, cipherText)
+			decryptedText, err := utils.String.AESDecrypt(test.key, cipherText)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, decryptedText)
 		})

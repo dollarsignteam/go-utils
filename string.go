@@ -122,8 +122,8 @@ func (StringUtil) HashCrc32(s string) string {
 }
 
 // Parse EMVCoQR string to struct
-func (StringUtil) ParseEMVCoQRString(qrString string) (EMVCoQRInfo, error) {
-	if err := ValidateEMVCoQRString(qrString); err != nil {
+func (s StringUtil) ParseEMVCoQRString(qrString string) (EMVCoQRInfo, error) {
+	if err := s.ValidateEMVCoQRString(qrString); err != nil {
 		return EMVCoQRInfo{}, err
 	}
 	result := EMVCoQRInfo{}
@@ -195,7 +195,7 @@ func (StringUtil) ParseEMVCoQRString(qrString string) (EMVCoQRInfo, error) {
 }
 
 // ValidateEMVCoQRString validates the EMVCoQR string
-func ValidateEMVCoQRString(qrString string) error {
+func (StringUtil) ValidateEMVCoQRString(qrString string) error {
 	if len(qrString) < 14 {
 		return fmt.Errorf("invalid specified qr string length")
 	}
@@ -210,7 +210,7 @@ func ValidateEMVCoQRString(qrString string) error {
 }
 
 // Encrypt encrypts the given plaintext using AES encryption with the provided key.
-func AESEncrypt(key, plaintext string) (string, error) {
+func (StringUtil) AESEncrypt(key, plaintext string) (string, error) {
 	block, err := aes.NewCipher([]byte(key))
 	if err != nil {
 		return "", err
@@ -228,7 +228,7 @@ func AESEncrypt(key, plaintext string) (string, error) {
 }
 
 // Decrypt decrypts the given cipherText using AES decryption with the provided key.
-func AESDecrypt(key, cipherText string) (string, error) {
+func (StringUtil) AESDecrypt(key, cipherText string) (string, error) {
 	block, err := aes.NewCipher([]byte(key))
 	if err != nil {
 		return "", err
