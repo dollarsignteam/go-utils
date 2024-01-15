@@ -1,10 +1,15 @@
 package utils
 
 import (
-	"crypto/md5"  // #nosec
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/md5" // #nosec
+	"crypto/rand"
 	"crypto/sha1" // #nosec
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash/crc32"
 	"strconv"
@@ -202,4 +207,48 @@ func ValidateEMVCoQRString(qrString string) error {
 		return fmt.Errorf("qr checksum is incorrect")
 	}
 	return nil
+}
+
+// Encrypt encrypts the given plaintext using AES encryption with the provided key.
+func AESEncrypt(key, plaintext string) (string, error) {
+	block, err := aes.NewCipher([]byte(key))
+	if err != nil {
+		return "", err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
+		return "", err
+	}
+	cipherText := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
+	return base64.StdEncoding.EncodeToString(cipherText), nil
+}
+
+// Decrypt decrypts the given cipherText using AES decryption with the provided key.
+func AESDecrypt(key, cipherText string) (string, error) {
+	block, err := aes.NewCipher([]byte(key))
+	if err != nil {
+		return "", err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	decodedCipherText, err := base64.StdEncoding.DecodeString(cipherText)
+	if err != nil {
+		return "", err
+	}
+	nonceSize := gcm.NonceSize()
+	if len(decodedCipherText) < nonceSize {
+		return "", errors.New("cipherText is too short")
+	}
+	nonce, cipherTextBytes := decodedCipherText[:nonceSize], []byte(decodedCipherText[nonceSize:])
+	plaintext, err := gcm.Open(nil, nonce, cipherTextBytes, nil)
+	if err != nil {
+		return "", err
+	}
+	return string(plaintext), nil
 }

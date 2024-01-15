@@ -139,6 +139,37 @@ func TestParseEMVCoQRString(t *testing.T) {
 	}
 }
 
+func TestAESEncryptDecrypt(t *testing.T) {
+	tests := []struct {
+		name      string
+		key       string
+		plaintext string
+		expected  string
+	}{
+		{
+			name:      "empty string",
+			key:       "ExampleKey123456",
+			plaintext: "",
+			expected:  "",
+		},
+		{
+			name:      "normal string",
+			key:       "ExampleKey123456",
+			plaintext: "Hello, World!",
+			expected:  "Hello, World!",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cipherText, err := utils.AESEncrypt(test.key, test.plaintext)
+			assert.NoError(t, err)
+			decryptedText, err := utils.AESDecrypt(test.key, cipherText)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expected, decryptedText)
+		})
+	}
+}
+
 func BenchmarkRemoveDuplicateSpaces(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		utils.String.RemoveDuplicateSpaces(TestSpacesString)
