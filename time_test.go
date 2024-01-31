@@ -132,7 +132,17 @@ func TestTimeUtil(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result := test.function(test.input)
-			assert.Equal(t, test.expected, result, "they should be equal")
+			assert.Equal(t, test.expected, result)
 		})
 	}
+}
+
+func TestIsYesterday(t *testing.T) {
+	yesterday := utils.Time.Yesterday(time.Now())
+	assert.True(t, utils.Time.IsYesterday(yesterday))
+}
+
+func TestIsTomorrow(t *testing.T) {
+	tomorrow := utils.Time.Tomorrow(time.Now())
+	assert.True(t, utils.Time.IsTomorrow(tomorrow))
 }
