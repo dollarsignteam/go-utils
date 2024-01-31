@@ -75,6 +75,18 @@ func (b *EchoBinderWithValidation) BindQueryParams(c echo.Context, i any) error 
 	return b.validateWithErrorHandling(i, err)
 }
 
+// BindAll binds all request data, validates it using ValidateStruct(),
+func (b *EchoBinderWithValidation) BindAll(i any, c echo.Context) error {
+	if err := b.DefaultBinder.BindPathParams(c, i); err != nil {
+		return b.validateWithErrorHandling(i, err)
+	}
+	if err := b.DefaultBinder.BindQueryParams(c, i); err != nil {
+		return b.validateWithErrorHandling(i, err)
+	}
+	err := b.DefaultBinder.BindBody(c, i)
+	return b.validateWithErrorHandling(i, err)
+}
+
 // DefaultRootHandler handles requests to the root endpoint
 func (EchoUtil) DefaultRootHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"message": "200 OK"})

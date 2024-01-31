@@ -3,9 +3,9 @@ package utils
 import "time"
 
 const (
-	MySQLDateTimeLayout = time.DateTime
-	MySQLDateLayout     = time.DateOnly
-	MySQLTimeLayout     = time.TimeOnly
+	MySQLDateTimeLayout = "2006-01-02 15:04:05"
+	MySQLDateLayout     = "2006-01-02"
+	MySQLTimeLayout     = "15:04:05"
 )
 
 const (

@@ -230,6 +230,29 @@ func TestEchoValidator_Validate(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestEchoBinderWithValidation_BindAll(t *testing.T) {
+	type TestRequest struct {
+		ID     int    `param:"id" validate:"required"`
+		Name   string `json:"name" validate:"required"`
+		Field1 string `query:"field1" validate:"required"`
+	}
+	e := echo.New()
+	binder := utils.EchoBinder
+	body := `{"name":"John"}`
+	req := httptest.NewRequest(http.MethodPost, "/users/123?field1=value1", strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	c := e.NewContext(req, httptest.NewRecorder())
+	c.SetPath("/users/:id")
+	c.SetParamNames("id")
+	c.SetParamValues("123")
+	testRequest := new(TestRequest)
+	err := binder.BindAll(testRequest, c)
+	assert.Nil(t, err)
+	assert.Equal(t, 123, testRequest.ID)
+	assert.Equal(t, "John", testRequest.Name)
+	assert.Equal(t, "value1", testRequest.Field1)
+}
+
 func TestEchoNew(t *testing.T) {
 	e := utils.Echo.New()
 	assert.IsType(t, &echo.Echo{}, e)

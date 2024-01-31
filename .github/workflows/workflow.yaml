@@ -4,9 +4,9 @@
 name: Go
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,18 +15,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@master
         with:
-          go-version: 1.19
+          go-version: 1.20
       - name: Install
         run: go mod download
       - name: Test
         run: go test ./...
-#        run: go test -v -coverprofile=coverage.out ./...
-#      - name: Upload coverage to Codecov
-#        uses: codecov/codecov-action@v3
-#        with:
-#          token: ${{ secrets.CODECOV_TOKEN }}
-#          files: ./coverage1.xml,./coverage2.xml # optional
-#          flags: unittests # optional
-#          name: codecov-umbrella # optional
-#          fail_ci_if_error: true # optional (default = false)
-#          verbose: true # optional (default = false)
