@@ -59,3 +59,80 @@ func TestToMySQLTime(t *testing.T) {
 	expected := "20:28:39"
 	assert.Equal(t, expected, result)
 }
+
+func TestTimeUtil(t *testing.T) {
+	currentDate := time.Date(2024, 01, 31, 10, 30, 45, 123456789, time.UTC)
+	tests := []struct {
+		name     string
+		function func(time.Time) time.Time
+		input    time.Time
+		expected time.Time
+	}{
+		{
+			name:     "Yesterday",
+			function: utils.Time.Yesterday,
+			input:    currentDate,
+			expected: time.Date(2024, 01, 30, 10, 30, 45, 123456789, time.UTC),
+		},
+		{
+			name:     "Tomorrow",
+			function: utils.Time.Tomorrow,
+			input:    currentDate,
+			expected: time.Date(2024, 02, 1, 10, 30, 45, 123456789, time.UTC),
+		},
+		{
+			name:     "BeginningOfDay",
+			function: utils.Time.BeginningOfDay,
+			input:    currentDate,
+			expected: time.Date(2024, 01, 31, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:     "EndOfDay",
+			function: utils.Time.EndOfDay,
+			input:    currentDate,
+			expected: time.Date(2024, 01, 31, 23, 59, 59, 999999999, time.UTC),
+		},
+		{
+			name:     "BeginningOfWeek",
+			function: utils.Time.BeginningOfWeek,
+			input:    currentDate,
+			expected: time.Date(2024, 01, 29, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:     "EndOfWeek",
+			function: utils.Time.EndOfWeek,
+			input:    currentDate,
+			expected: time.Date(2024, 02, 4, 23, 59, 59, 999999999, time.UTC),
+		},
+		{
+			name:     "BeginningOfMonth",
+			function: utils.Time.BeginningOfMonth,
+			input:    currentDate,
+			expected: time.Date(2024, 01, 01, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:     "EndOfMonth",
+			function: utils.Time.EndOfMonth,
+			input:    currentDate,
+			expected: time.Date(2024, 01, 31, 23, 59, 59, 999999999, time.UTC),
+		},
+		{
+			name:     "BeginningOfYear",
+			function: utils.Time.BeginningOfYear,
+			input:    currentDate,
+			expected: time.Date(2024, 01, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:     "EndOfYear",
+			function: utils.Time.EndOfYear,
+			input:    currentDate,
+			expected: time.Date(2024, 12, 31, 23, 59, 59, 999999999, time.UTC),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.function(test.input)
+			assert.Equal(t, test.expected, result, "they should be equal")
+		})
+	}
+}

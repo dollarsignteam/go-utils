@@ -64,3 +64,67 @@ func (TimeUtil) ToMySQLDate(value time.Time) string {
 func (TimeUtil) ToMySQLTime(value time.Time) string {
 	return value.Format(MySQLTimeLayout)
 }
+
+// Yesterday returns a time value of yesterday
+func (TimeUtil) Yesterday(value time.Time) time.Time {
+	return value.AddDate(0, 0, -1)
+}
+
+// Tomorrow returns a time value of tomorrow
+func (TimeUtil) Tomorrow(value time.Time) time.Time {
+	return value.AddDate(0, 0, 1)
+}
+
+// IsYesterday returns true if the specified time value is yesterday
+func (TimeUtil) IsYesterday(value time.Time) bool {
+	return value.Format(MySQLDateLayout) == Time.Yesterday(time.Now()).Format(MySQLDateLayout)
+}
+
+// IsTomorrow returns true if the specified time value is tomorrow
+func (TimeUtil) IsTomorrow(value time.Time) bool {
+	return value.Format(MySQLDateLayout) == Time.Tomorrow(time.Now()).Format(MySQLDateLayout)
+}
+
+// BeginningOfDay returns a time value of the beginning of the day
+func (TimeUtil) BeginningOfDay(value time.Time) time.Time {
+	return time.Date(value.Year(), value.Month(), value.Day(), 0, 0, 0, 0, value.Location())
+}
+
+// EndOfDay returns a time value of the end of the day
+func (TimeUtil) EndOfDay(value time.Time) time.Time {
+	return time.Date(value.Year(), value.Month(), value.Day(), 23, 59, 59, 999999999, value.Location())
+}
+
+// BeginningOfWeek returns a time value of the beginning of the week
+func (TimeUtil) BeginningOfWeek(value time.Time) time.Time {
+	daysUntilMonday := -1 * int((value.Weekday()+6)%7)
+	startOfWeek := value.AddDate(0, 0, daysUntilMonday)
+	return time.Date(startOfWeek.Year(), startOfWeek.Month(), startOfWeek.Day(), 0, 0, 0, 0, value.Location())
+}
+
+// EndOfWeek returns a time value of the end of the week
+func (TimeUtil) EndOfWeek(value time.Time) time.Time {
+	daysUntilSunday := 7 - int(value.Weekday())
+	endOfWeek := value.AddDate(0, 0, daysUntilSunday)
+	return time.Date(endOfWeek.Year(), endOfWeek.Month(), endOfWeek.Day(), 23, 59, 59, 999999999, value.Location())
+}
+
+// BeginningOfMonth returns a time value of the beginning of the month
+func (TimeUtil) BeginningOfMonth(value time.Time) time.Time {
+	return time.Date(value.Year(), value.Month(), 1, 0, 0, 0, 0, value.Location())
+}
+
+// EndOfMonth returns a time value of the end of the month
+func (TimeUtil) EndOfMonth(value time.Time) time.Time {
+	return time.Date(value.Year(), value.Month()+1, 0, 23, 59, 59, 999999999, value.Location())
+}
+
+// BeginningOfYear returns a time value of the beginning of the year
+func (TimeUtil) BeginningOfYear(value time.Time) time.Time {
+	return time.Date(value.Year(), 1, 1, 0, 0, 0, 0, value.Location())
+}
+
+// EndOfYear returns a time value of the end of the year
+func (TimeUtil) EndOfYear(value time.Time) time.Time {
+	return time.Date(value.Year(), 12, 31, 23, 59, 59, 999999999, value.Location())
+}
