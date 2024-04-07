@@ -92,4 +92,6 @@ func TestIsImage_InvalidFile(t *testing.T) {
 	}
 	result := utils.Image.IsImage(fh)
 	assert.False(t, result)
+	assert.False(t, utils.Image.IsImage(nil))
+	assert.False(t, utils.Image.IsImageContentType(nil))
 }
