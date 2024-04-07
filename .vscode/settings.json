@@ -18,15 +18,19 @@
     "fasttemplate",
     "gommon",
     "gopkg",
+    "gozxing",
     "isatty",
     "labstack",
     "leodido",
+    "makiuchi",
     "mattn",
     "miniredis",
     "pmezard",
     "Println",
+    "qrcode",
     "sess",
     "sigurn",
-    "valyala"
+    "valyala",
+    "webp"
   ]
 }
