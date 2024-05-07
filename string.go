@@ -191,9 +191,6 @@ func (s StringUtil) ParseEMVCoQRString(qrString string) (EMVCoQRInfo, error) {
 		}
 		index += 4 + length
 	}
-	if result.Ref2 == "0" {
-		result.Ref3 = ""
-	}
 	return result, nil
 }
 

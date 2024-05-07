@@ -129,23 +129,6 @@ func TestParseEMVCoQRString(t *testing.T) {
 				Ref3:            "X8YYB3JO8",
 			},
 		},
-		{
-			name:  "Test Case 5",
-			input: "00020101021230570016A00000067701011201150105566213439400209PDRKEMVBG03010530376454071999.775802TH62130709PDRKEMVBG63044AC0",
-			infoExpected: utils.EMVCoQRInfo{
-				Format:          "12",
-				MerchantAccount: "0016A00000067701011201150105566213439400209PDRKEMVBG03010",
-				Amount:          "1999.77",
-				PhoneNumber:     "",
-				CountryCode:     "TH",
-				Crc:             "4AC0",
-				CurrencyISO4217: "764",
-				BillerID:        "010556621343940",
-				Ref1:            "PDRKEMVBG",
-				Ref2:            "0",
-				Ref3:            "",
-			},
-		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
