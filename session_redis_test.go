@@ -203,7 +203,8 @@ func TestSessionRedisHandler_Set(t *testing.T) {
 	}
 
 	t.Run("set", func(t *testing.T) {
-		err := h.Set(session, time.Now().Add(1*time.Second).Unix())
+		expireAt := time.Now().Add(1 * time.Second).Unix()
+		err := h.Set(session, expireAt)
 		assert.Nil(t, err)
 	})
 
