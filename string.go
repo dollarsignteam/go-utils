@@ -149,6 +149,11 @@ func (s StringUtil) ParseEMVCoQRString(qrString string) (EMVCoQRInfo, error) {
 			result.MerchantAccount = value
 			if prefixPhoneIndex != -1 {
 				result.PhoneNumber = value[prefixPhoneIndex+6:]
+			} else {
+				prefixIDIndex := strings.Index(value, "110213")
+				if prefixIDIndex != -1 {
+					result.PhoneNumber = value[prefixIDIndex+6:]
+				}
 			}
 		case "30":
 			result.MerchantAccount = value
