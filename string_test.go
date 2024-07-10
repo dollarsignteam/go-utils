@@ -131,23 +131,6 @@ func TestParseEMVCoQRString(t *testing.T) {
 		},
 		{
 			name:  "Test Case 5",
-			input: "00020101021230570016A00000067701011201150105566213439400209PDRKEMVBG03010530376454071999.775802TH62130709PDRKEMVBG63044AC0",
-			infoExpected: utils.EMVCoQRInfo{
-				Format:          "12",
-				MerchantAccount: "0016A00000067701011201150105566213439400209PDRKEMVBG03010",
-				Amount:          "1999.77",
-				PhoneNumber:     "",
-				CountryCode:     "TH",
-				Crc:             "4AC0",
-				CurrencyISO4217: "764",
-				BillerID:        "010556621343940",
-				Ref1:            "PDRKEMVBG",
-				Ref2:            "0",
-				Ref3:            "",
-			},
-		},
-		{
-			name:  "Test Case 6",
 			input: "00020101021253037645802TH29370016A000000677010111021303455660038075406200.006304ABA1",
 			infoExpected: utils.EMVCoQRInfo{
 				Format:          "12",

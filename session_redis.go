@@ -120,7 +120,7 @@ func (RedisUtil) NewSessionHandler(config SessionRedisConfig) SessionHandler {
 func (h *SessionRedisHandler) Set(s Session, expiresAt int64) error {
 	key := h.getKey(s.Meta.param())
 	ttl := time.Duration(Max(1, expiresAt-time.Now().Unix())) * time.Second
-	return h.client.SetStruct(key, s, time.Duration(ttl)*time.Second)
+	return h.client.SetStruct(key, s, time.Duration(ttl.Seconds())*time.Second)
 }
 
 // Get retrieves session data from Redis using the provided metadata.
