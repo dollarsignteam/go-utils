@@ -234,8 +234,10 @@ func (h *SessionRedisHandler) getKey(param sessionKeyParam) string {
 	var builder strings.Builder
 	builder.WriteString(h.prefixKey)
 	builder.WriteByte(':')
-	builder.WriteString(param.groupID)
-	builder.WriteByte(':')
+	if param.groupID != "" {
+		builder.WriteString(param.groupID)
+		builder.WriteByte(':')
+	}
 	builder.WriteString(param.userID)
 	if h.multipleSessionPerUser {
 		builder.WriteByte(':')
