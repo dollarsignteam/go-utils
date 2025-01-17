@@ -16,6 +16,7 @@ const (
 	ErrCodeSomethingWentWrong = "SOMETHING_WENT_WRONG"
 	ErrCodeBadRequest         = "BAD_REQUEST"
 	ErrCodeUnauthorized       = "UNAUTHORIZED"
+	ErrCodeNotFound           = "NOT_FOUND"
 )
 
 // Error message constants
@@ -23,6 +24,7 @@ const (
 	ErrMessageSomethingWentWrong = "Something went wrong"
 	ErrMessageBadRequest         = "Bad request"
 	ErrMessageUnauthorized       = "Unauthorized"
+	ErrMessageNotFound           = "Not Found"
 )
 
 const errMessageValidationFailed = "Key: '%s', Error: Validation for '%s' failed on the '%s' tag"
@@ -186,6 +188,9 @@ func ParseErrorResponse(err error) ErrorResponse {
 		case http.StatusUnauthorized:
 			resp.ErrorCode = ErrCodeUnauthorized
 			resp.ErrorMessage = ErrMessageUnauthorized
+		case http.StatusNotFound:
+			resp.ErrorCode = ErrCodeNotFound
+			resp.ErrorMessage = ErrMessageNotFound
 		default:
 			message := fmt.Sprintf("%v", err.Message)
 			if err.Internal != nil {
