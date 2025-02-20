@@ -105,6 +105,7 @@ func (EchoUtil) New() *echo.Echo {
 	e.Validator = new(EchoValidator)
 	e.Binder = &EchoBinder
 	e.Pre(middleware.RemoveTrailingSlash())
+	e.Use(middleware.Gzip())
 	e.GET("/", Echo.DefaultRootHandler)
 	e.GET("/favicon.ico", Echo.NoContentHandler)
 	return e
