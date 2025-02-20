@@ -218,6 +218,30 @@ func TestParseErrorResponse(t *testing.T) {
 		assert.Equal(t, utils.ErrMessageUnauthorized, resp.ErrorMessage)
 	})
 
+	t.Run("HTTPErrorNotFound", func(t *testing.T) {
+		err := echo.ErrNotFound
+		resp := utils.ParseErrorResponse(err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+		assert.Equal(t, utils.ErrCodeNotFound, resp.ErrorCode)
+		assert.Equal(t, utils.ErrMessageNotFound, resp.ErrorMessage)
+	})
+
+	t.Run("HTTPErrorForbidden", func(t *testing.T) {
+		err := echo.ErrForbidden
+		resp := utils.ParseErrorResponse(err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+		assert.Equal(t, utils.ErrCodeForbidden, resp.ErrorCode)
+		assert.Equal(t, utils.ErrMessageForbidden, resp.ErrorMessage)
+	})
+
+	t.Run("HTTPErrorMethodNotAllowed", func(t *testing.T) {
+		err := echo.ErrMethodNotAllowed
+		resp := utils.ParseErrorResponse(err)
+		assert.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode)
+		assert.Equal(t, utils.ErrCodeMethodNotAllowed, resp.ErrorCode)
+		assert.Equal(t, utils.ErrMessageMethodNotAllowed, resp.ErrorMessage)
+	})
+
 	t.Run("HTTPErrorInternalError", func(t *testing.T) {
 		err := &echo.HTTPError{
 			Code:     http.StatusInternalServerError,
